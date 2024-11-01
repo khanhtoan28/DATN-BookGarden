@@ -1,12 +1,14 @@
 import React from 'react';
 import { Route, Redirect } from 'react-router-dom';
 
-const PublicRoute = ({ children, ...rest }) => {
+const PrivateRoute = ({ children, ...rest }) => {
 
     const checkAuth = () => {
-        console.log(localStorage.getItem('client'));
-        if (localStorage.getItem('client') !== null) return false;
-        return true;
+        if (localStorage.getItem('client') !== null){
+            return true;
+        }else{
+            return false;
+        }
     }
 
     return (
@@ -18,7 +20,7 @@ const PublicRoute = ({ children, ...rest }) => {
                 ) : (
                         <Redirect
                             to={{
-                                pathname: "/home",
+                                pathname: "/login",
                                 state: { from: location }
                             }}
                         />
@@ -28,4 +30,4 @@ const PublicRoute = ({ children, ...rest }) => {
     );
 }
 
-export default PublicRoute;
+export default PrivateRoute;
