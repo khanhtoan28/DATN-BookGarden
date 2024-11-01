@@ -93,7 +93,7 @@ const RegisterCustomer = () => {
                   style={{ marginBottom: 5, fontSize: 19 }}
                   orientation="center"
                 >
-                  Insight Book
+                  Book Garden
                 </Divider>
               </Form.Item>
               <Form.Item style={{ marginBottom: 16 }}>
