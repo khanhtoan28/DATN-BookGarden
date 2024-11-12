@@ -15,8 +15,12 @@ import {
   message,
   notification,
 } from "antd";
+import { PlayCircleOutlined, PauseCircleOutlined } from "@ant-design/icons";
 import Paragraph from "antd/lib/typography/Paragraph";
 import React, { useEffect, useState, useRef } from "react";
+import { useHistory, useParams } from "react-router-dom";
+import axiosClient from "../../../apis/axiosClient";
+import productApi from "../../../apis/productApi";
 import triangleTopRight from "../../../assets/icon/Triangle-Top-Right.svg";
 import { numberWithCommas } from "../../../utils/common";
 import AudioPlayer from "react-h5-audio-player";
@@ -28,6 +32,176 @@ const { TextArea } = Input;
 
 const ProductDetail = () => {
   const [productDetail, setProductDetail] = useState([]);
+  const [recommend, setRecommend] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [cartLength, setCartLength] = useState();
+  const [form] = Form.useForm();
+  let { id } = useParams();
+  const history = useHistory();
+  const [visible2, setVisible2] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+
+  const viewBookOnline = (url) => {
+    window.location.href = url;
+  };
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
+  const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+
+  const handleListenBook = () => {
+    setShowAudioPlayer(true);
+
+    if (audioRef.current && audioRef.current.audio.current) {
+      if (isPlaying) {
+        audioRef.current.audio.current.pause(); // Dừng phát âm thanh
+      } else {
+        audioRef.current.audio.current.play(); // Phát âm thanh
+      }
+    }
+    setIsPlaying(!isPlaying); // Cập nhật trạng thái phát nhạc
+  };
+
+  const addCart = (product) => {
+    console.log(product);
+    const existingItems = JSON.parse(localStorage.getItem("cart")) || [];
+    let updatedItems;
+    const existingItemIndex = existingItems.findIndex(
+      (item) => item._id === product._id
+    );
+    if (existingItemIndex !== -1) {
+      // If product already exists in the cart, increase its quantity
+      updatedItems = existingItems.map((item, index) => {
+        if (index === existingItemIndex) {
+          return {
+            ...item,
+            quantity: item.quantity + 1,
+          };
+        }
+        return item;
+      });
+    } else {
+      // If product does not exist in the cart, add it to the cart
+      updatedItems = [...existingItems, { ...product, quantity: 1 }];
+    }
+    console.log(updatedItems.length);
+    setCartLength(updatedItems.length);
+    localStorage.setItem("cart", JSON.stringify(updatedItems));
+    localStorage.setItem("cartLength", updatedItems.length);
+    window.location.reload(true);
+  };
+
+  const paymentCard = (product) => {
+    console.log(product);
+    const existingItems = JSON.parse(localStorage.getItem("cart")) || [];
+    let updatedItems;
+    const existingItemIndex = existingItems.findIndex(
+      (item) => item._id === product._id
+    );
+    if (existingItemIndex !== -1) {
+      // If product already exists in the cart, increase its quantity
+      updatedItems = existingItems.map((item, index) => {
+        if (index === existingItemIndex) {
+          return {
+            ...item,
+            quantity: item.quantity + 1,
+          };
+        }
+        return item;
+      });
+    } else {
+      // If product does not exist in the cart, add it to the cart
+      updatedItems = [...existingItems, { ...product, quantity: 1 }];
+    }
+    console.log(updatedItems.length);
+    setCartLength(updatedItems.length);
+    localStorage.setItem("cart", JSON.stringify(updatedItems));
+    localStorage.setItem("cartLength", updatedItems.length);
+    history.push("/cart");
+  };
+  const handleReadMore = (id) => {
+    console.log(id);
+    history.push("/product-detail/" + id);
+    window.location.reload();
+  };
+
+  const handleOpenModal = () => {
+    setVisible2(true);
+  };
+
+  const handleCloseModal = () => {
+    setVisible2(false);
+  };
+
+  const handleRateChange = (value) => {
+    setRating(value);
+  };
+
+  const handleCommentChange = (e) => {
+    setComment(e.target.value);
+  };
+
+  const handleReviewSubmit = async () => {
+    // Tạo payload để gửi đến API
+    const payload = {
+      comment,
+      rating,
+    };
+
+    // Gọi API đánh giá và bình luận
+    await axiosClient
+      .post(`/product/${id}/reviews`, payload)
+      .then((response) => {
+        console.log(response);
+        // Xử lý khi gọi API thành công
+        console.log("Review created");
+        // Đóng modal và thực hiện các hành động khác nếu cần
+        message.success("Thông báo:" + response);
+        handleList();
+        handleCloseModal();
+      })
+      .catch((error) => {
+        // Xử lý khi gọi API thất bại
+        console.error("Error creating review:", error);
+        // Hiển thị thông báo lỗi cho người dùng nếu cần
+        message.error("Đánh giá thất bại: " + error);
+      });
+  };
+
+  const [reviews, setProductReview] = useState([]);
+  const [reviewsCount, setProductReviewCount] = useState([]);
+  const [avgRating, setAvgRating] = useState(null);
+  const [user, setUser] = useState(null);
+
+  const handleList = () => {
+    (async () => {
+      try {
+        const local = localStorage.getItem("user");
+        const user = JSON.parse(local);
+        setUser(user);
+
+        await productApi.getDetailProduct(id).then((item) => {
+          setProductDetail(item.product);
+          setProductReview(item.reviews);
+          setProductReviewCount(item.reviewStats);
+          setAvgRating(item.avgRating);
+          console.log(((reviewsCount[4] || 0) / reviews.length) * 100);
+        });
+        await productApi.getRecommendProduct(id).then((item) => {
+          setRecommend(item?.recommendations);
+        });
+        setLoading(false);
+      } catch (error) {
+        console.log("Failed to fetch event detail:" + error);
+      }
+    })();
+  };
+
+  useEffect(() => {
+    handleList();
+    window.scrollTo(0, 0);
+  }, [cartLength]);
 
   return (
     <div>

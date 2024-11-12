@@ -1,11 +1,83 @@
-import { Breadcrumb, Button, Card, Col, List, Row, Spin } from "antd";
+import { Breadcrumb, Button, Card, Col, Form, List, Row, Spin } from "antd";
 import Paragraph from "antd/lib/typography/Paragraph";
+import React, { useEffect, useState } from "react";
+import { useHistory, useParams, useRouteMatch } from "react-router-dom";
+import axiosClient from "../../../apis/axiosClient";
+import productApi from "../../../apis/productApi";
 import triangleTopRight from "../../../assets/icon/Triangle-Top-Right.svg";
 import { numberWithCommas } from "../../../utils/common";
 import "./productList.css";
 
 const ProductList = () => {
   const [productDetail, setProductDetail] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form] = Form.useForm();
+  const [categories, setCategories] = useState([]);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(100000000);
+
+  let { id } = useParams();
+  const history = useHistory();
+  const match = useRouteMatch();
+
+  const handleReadMore = (id) => {
+    console.log(id);
+    history.push("/product-detail/" + id);
+    window.location.reload();
+  };
+
+  const handleCategoryDetails = (id) => {
+    const newPath = match.url.replace(/\/[^/]+$/, `/${id}`);
+    history.push(newPath);
+    window.location.reload();
+  };
+
+  const handleSearchPrice = async (minPrice, maxPrice) => {
+    try {
+      const dataForm = {
+        page: 1,
+        limit: 50,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+      };
+      await axiosClient
+        .post("/product/searchByPrice", dataForm)
+        .then((response) => {
+          if (response === undefined) {
+            setLoading(false);
+          } else {
+            // Lọc các sản phẩm có trạng thái là "Available"
+            setProductDetail(response.data.docs);
+            setLoading(false);
+          }
+        });
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleSearchClick = () => {
+    // Gọi hàm tìm kiếm theo giá
+    handleSearchPrice(minPrice, maxPrice);
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await productApi.getProductCategory(id).then((response) => {
+          // Cập nhật state với danh sách sản phẩm chỉ có trạng thái 'Available'
+          setProductDetail(response.data.docs);
+        });
+        const response = await productApi.getCategory({ limit: 50, page: 1 });
+        setCategories(response.data.docs);
+
+        setLoading(false);
+      } catch (error) {
+        console.log("Failed to fetch event detail:" + error);
+      }
+    })();
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div>
@@ -23,7 +95,30 @@ const ProductList = () => {
               </Breadcrumb>
             </div>
             <hr></hr>
-
+            {/* <div className="container box">
+              {categories.map((category) => (
+                <div
+                  key={category.id}
+                  onClick={() => handleCategoryDetails(category._id)}
+                  className="menu-item-1"
+                >
+                  <div className="menu-category-1">{category.name}</div>
+                </div>
+              ))}
+            </div> */}
+            {/* <div className="container">
+                    <Button type="primary" onClick={() => handleSearchClick()}>
+                        Search theo giá sản phẩm
+                    </Button>
+                    <Slider
+                        range
+                        min={0}
+                        max={250000}
+                        value={[minPrice, maxPrice]}
+                        onChange={handleSliderChange}
+                        onAfterChange={() => handleSearchClick()}
+                    />
+                </div> */}
             <div
               className="list-products container"
               key="1"
