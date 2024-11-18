@@ -76,7 +76,7 @@ const RegisterCustomer = () => {
   };
   return (
     <div>
-      <div className="imageBackground">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-green-500 to-green-600">
         <div id="wrapper">
           <Card id="dialog" bordered={false}>
             <Form
@@ -150,7 +150,7 @@ const RegisterCustomer = () => {
               >
                 <Input
                   prefix={<MailOutlined className="siteformitemicon" />}
-                  placeholder="e-mail!"
+                  placeholder="Email"
                 />
               </Form.Item>
 
@@ -178,7 +178,7 @@ const RegisterCustomer = () => {
 
               <Form.Item style={{ marginBottom: 18 }}>
                 <Button
-                  className="loginformbutton"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md"
                   type="primary"
                   htmlType="submit"
                 >
