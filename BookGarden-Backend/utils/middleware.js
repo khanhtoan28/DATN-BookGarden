@@ -7,8 +7,6 @@ const Author = require("../app/models/author");
 const Pulisher = require("../app/models/pulisher");
 const Product = require("../app/models/product");
 const Order = require("../app/models/order");
-const News = require("../app/models/news");
-const ReviewModel = require("../app/models/review");
 const User = require("../app/models/user");
 
 module.exports = {
@@ -72,68 +70,14 @@ module.exports = {
       console.log("Product ID:", productId);
 
       // Lấy thông tin sản phẩm
-      const product = await Product.findById(productId)
-        .populate("category") // Lấy thông tin chi tiết từ bảng category
-        .populate("author") // Lấy thông tin chi tiết từ bảng author
-        .populate("pulisher"); // Lấy thông tin chi tiết từ bảng pulisher
-
+      const product = await Product.findById(productId).populate("category");
       if (!product) {
         return res.status(404).json({ message: "Cannot find product" });
       }
-
-      // Lấy thông tin đánh giá
-      const reviews = await ReviewModel.find({ product: productId }).select(
-        "comment rating createdAt"
-      );
-      const reviewCount = reviews.length;
-      let totalRating = 0;
-
-      // Tính trung bình số sao đánh giá
-      if (reviewCount > 0) {
-        totalRating =
-          reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount;
-      }
-
-      // Tính thống kê đánh giá
-      const reviewStats = {};
-      for (const review of reviews) {
-        if (reviewStats[review.rating]) {
-          reviewStats[review.rating]++;
-        } else {
-          reviewStats[review.rating] = 1;
-        }
-      }
-
-      const reviewStatsArray = Array.from({ length: 5 }, (_, i) => {
-        const rating = i + 1;
-        return reviewStats[rating] || 0;
-      });
-
-      res.status(200).json({
-        product: product,
-        reviewStats: reviewStatsArray,
-        avgRating: totalRating,
-        reviews: reviews,
-      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Server error" });
     }
-    next();
-  },
-
-  getNews: async (req, res, next) => {
-    let news;
-    try {
-      news = await News.findById(req.params.id);
-      if (news == null) {
-        return res.status(404).json({ message: "Cannot find news" });
-      }
-    } catch (err) {
-      return res.status(500).json({ message: err.message });
-    }
-
-    res.news = news;
     next();
   },
 
@@ -143,7 +87,7 @@ module.exports = {
         .populate("user", "username") // Lấy thông tin user và chỉ lấy trường username
         .populate({
           path: "products.product",
-          select: "name quantity image", // Chọn các trường name, quantity và image của sản phẩm
+          select: "name stock image", // Chọn các trường name, stock và image của sản phẩm
         }); // Lấy thông tin products và chỉ lấy trường name của product
 
       if (!order) {
@@ -154,9 +98,9 @@ module.exports = {
       const userName = order.user ? order.user.username : null;
       const products = order.products.map((product) => ({
         name: product.product.name,
-        quantity: product.quantity,
+        stock: product.stock,
         image: product.product.image,
-        price: product.price,
+        salePrice: product.salePrice,
       }));
 
       const result = {
