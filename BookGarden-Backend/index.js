@@ -10,12 +10,14 @@ const _CONST = require("./app/config/constant");
 // const { sendEmailNotification } = require('./app/kafka/consumer');
 
 //router
+const authRoute = require("./app/routers/auth");
+const userRoute = require("./app/routers/user");
 const productRoute = require("./app/routers/product");
 const categoryRoute = require("./app/routers/category");
 const authorRoute = require("./app/routers/author");
 const pulisherRoute = require("./app/routers/pulisher");
 const uploadFileRoute = require("./app/routers/uploadFile");
-
+const orderRoute = require("./app/routers/order");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
@@ -30,11 +32,14 @@ mongoose
     console.error("MongoDB connection error:", error);
   });
 
+app.use("/api/auth", authRoute);
+app.use("/api/user", userRoute);
 app.use("/api/product", productRoute);
 app.use("/api/category", categoryRoute);
 app.use("/api/author", authorRoute);
 app.use("/api/pulisher", pulisherRoute);
 app.use("/api/uploadFile", uploadFileRoute);
+app.use("/api/order", orderRoute);
 app.use("/uploads", express.static("uploads"));
 // sendEmailNotification();
 

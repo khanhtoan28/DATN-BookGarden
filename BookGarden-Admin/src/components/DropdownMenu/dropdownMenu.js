@@ -2,11 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./dropdownMenu.css";
 import { useHistory } from "react-router-dom";
 import { Avatar, Dropdown, Row, Menu } from "antd";
-import {
-  UserOutlined,
-  SettingOutlined,
-  LogoutOutlined,
-} from "@ant-design/icons";
+import { LogoutOutlined } from "@ant-design/icons";
 import userApi from "../../apis/userApi";
 
 function DropdownAvatar() {
