@@ -1,19 +1,28 @@
 import React from "react";
 import { Route, Redirect } from "react-router-dom";
 
-const PublicRoute = ({ children }) => {
-  //
+const PublicRoute = ({ children, ...rest }) => {
+  const checkAuth = () => {
+    console.log(localStorage.getItem("client"));
+    if (localStorage.getItem("client") !== null) return false;
+    return true;
+  };
 
   return (
     <Route
-      render={({ location }) => (
-        <Redirect
-          to={{
-            pathname: "/home",
-            state: { from: location },
-          }}
-        />
-      )}
+      {...rest}
+      render={({ location }) =>
+        checkAuth() ? (
+          children
+        ) : (
+          <Redirect
+            to={{
+              pathname: "/home",
+              state: { from: location },
+            }}
+          />
+        )
+      }
     />
   );
 };
