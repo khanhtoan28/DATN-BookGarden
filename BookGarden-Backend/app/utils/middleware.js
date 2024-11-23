@@ -7,6 +7,8 @@ const Author = require("../app/models/author");
 const Pulisher = require("../app/models/pulisher");
 const Product = require("../app/models/product");
 const Order = require("../app/models/order");
+const News = require("../app/models/news");
+const ReviewModel = require("../app/models/review");
 const User = require("../app/models/user");
 
 module.exports = {
@@ -74,10 +76,60 @@ module.exports = {
       if (!product) {
         return res.status(404).json({ message: "Cannot find product" });
       }
+
+      // Lấy thông tin đánh giá
+      const reviews = await ReviewModel.find({ product: productId }).select(
+        "comment rating createdAt"
+      );
+      const reviewCount = reviews.length;
+      let totalRating = 0;
+
+      // Tính trung bình số sao đánh giá
+      if (reviewCount > 0) {
+        totalRating =
+          reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount;
+      }
+
+      // Tính thống kê đánh giá
+      const reviewStats = {};
+      for (const review of reviews) {
+        if (reviewStats[review.rating]) {
+          reviewStats[review.rating]++;
+        } else {
+          reviewStats[review.rating] = 1;
+        }
+      }
+
+      const reviewStatsArray = Array.from({ length: 5 }, (_, i) => {
+        const rating = i + 1;
+        return reviewStats[rating] || 0;
+      });
+
+      res.status(200).json({
+        product: product,
+        reviewStats: reviewStatsArray,
+        avgRating: totalRating,
+        reviews: reviews,
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Server error" });
     }
+    next();
+  },
+
+  getNews: async (req, res, next) => {
+    let news;
+    try {
+      news = await News.findById(req.params.id);
+      if (news == null) {
+        return res.status(404).json({ message: "Cannot find news" });
+      }
+    } catch (err) {
+      return res.status(500).json({ message: err.message });
+    }
+
+    res.news = news;
     next();
   },
 

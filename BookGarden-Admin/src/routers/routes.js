@@ -33,7 +33,6 @@ const AccountCreate = lazy(() => {
     new Promise((resolve) => setTimeout(resolve, 0)),
   ]).then(([moduleExports]) => moduleExports);
 });
-
 const ProductList = lazy(() => {
   return Promise.all([
     import("../pages/ProductList/productList"),
@@ -66,13 +65,6 @@ const DashBoard = lazy(() => {
   ]).then(([moduleExports]) => moduleExports);
 });
 
-const NewsList = lazy(() => {
-  return Promise.all([
-    import("../pages/News/news"),
-    new Promise((resolve) => setTimeout(resolve, 0)),
-  ]).then(([moduleExports]) => moduleExports);
-});
-
 const ChangePassword = lazy(() => {
   return Promise.all([
     import("../pages/ChangePassword/changePassword"),
@@ -94,13 +86,6 @@ const OrderDetail = lazy(() => {
   ]).then(([moduleExports]) => moduleExports);
 });
 
-const ContactList = lazy(() => {
-  return Promise.all([
-    import("../pages/Contact/contact"),
-    new Promise((resolve) => setTimeout(resolve, 0)),
-  ]).then(([moduleExports]) => moduleExports);
-});
-
 const RouterURL = withRouter(({ location }) => {
   const LoginContainer = () => (
     <div>
@@ -109,9 +94,7 @@ const RouterURL = withRouter(({ location }) => {
           <Login />
         </Suspense>
       </PublicRoute>
-      <PublicRoute exact path="/news-list">
-        <NewsList />
-      </PublicRoute>
+
       <PublicRoute exact path="/login">
         <Login />
       </PublicRoute>
@@ -181,21 +164,10 @@ const RouterURL = withRouter(({ location }) => {
                 <PulisherList />
               </Suspense>
             </PrivateRoute>
-            <PrivateRoute exact path="/news-list">
-              <Suspense fallback={<LoadingScreen />}>
-                <NewsList />
-              </Suspense>
-            </PrivateRoute>
 
             <PrivateRoute exact path="/order-list">
               <Suspense fallback={<LoadingScreen />}>
                 <OrderList />
-              </Suspense>
-            </PrivateRoute>
-
-            <PrivateRoute exact path="/contact-list">
-              <Suspense fallback={<LoadingScreen />}>
-                <ContactList />
               </Suspense>
             </PrivateRoute>
 
@@ -220,9 +192,6 @@ const RouterURL = withRouter(({ location }) => {
           </Route>
           <Route exact path="/login">
             <LoginContainer />
-          </Route>
-          <Route exact path="/news-list">
-            <DefaultContainer />
           </Route>
           <Route exact path="/reset-password/:id">
             <LoginContainer />
