@@ -1,5 +1,5 @@
 import React from "react";
-import Home from "../pages/home/home";
+import Home from "../pages/Home/home";
 import Login from "../pages/Login/login";
 import PublicRoute from "../components/PublicRoute";
 import Footer from "../components/layout/Footer/footer";
