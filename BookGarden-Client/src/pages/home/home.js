@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import eventApi from "../../apis/eventApi";
 import productApi from "../../apis/productApi";
 import triangleTopRight from "../../assets/icon/Triangle-Top-Right.svg";
-import "../Home/home.css";
+import "../home/home.css";
 
 import { BackTop, Carousel, Col, Row, Spin } from "antd";
 import Paragraph from "antd/lib/typography/Paragraph";
