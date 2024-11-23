@@ -30,7 +30,6 @@ import {
 } from "@ant-design/icons";
 import orderApi from "../../apis/orderApi";
 import { useHistory, useParams } from "react-router-dom";
-import { DateTime } from "../../utils/dateTime";
 import ProductList from "../ProductList/productList";
 import axiosClient from "../../apis/axiosClient";
 import { PageHeader } from "@ant-design/pro-layout";
