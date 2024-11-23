@@ -3,7 +3,10 @@ import "./register.css";
 import { DatePicker, Input } from "antd";
 import {
   Card,
-  //
+  Table,
+  Space,
+  Tag,
+  PageHeader,
   Divider,
   Form,
   Button,
@@ -14,30 +17,83 @@ import {
   LockOutlined,
   PhoneOutlined,
   MailOutlined,
-  //
+  AimOutlined,
+  MoneyCollectOutlined,
 } from "@ant-design/icons";
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, Link } from "react-router-dom";
+import axiosClient from "../../apis/axiosClient";
 
 const { Search } = Input;
 
 const RegisterCustomer = () => {
+  const [delivery, setDelivery] = useState([]);
+  let history = useHistory();
+
+  const onFinish = async (values) => {
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, "0");
+    var mm = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
+    var yyyy = today.getFullYear();
+    var date = yyyy + "-" + mm + "-" + dd;
+
+    try {
+      const formatData = {
+        email: values.email,
+        username: values.username,
+        password: values.password,
+        phone: values.phoneNo,
+        role: "isClient",
+        status: "actived",
+      };
+      await axiosClient
+        .post("http://localhost:3100/api/auth/register", formatData)
+        .then((response) => {
+          console.log(response);
+          if (response === "Email is exist") {
+            return notification["error"]({
+              message: "Thông báo",
+              description: "Email đã tồn tại",
+            });
+          }
+          if (response === undefined) {
+            notification["error"]({
+              message: "Thông báo",
+              description: "Đăng ký thất bại",
+            });
+          } else {
+            notification["success"]({
+              message: "Thông báo",
+              description: "Đăng kí thành công",
+            });
+            setTimeout(function () {
+              history.push("/login");
+            }, 1000);
+          }
+        });
+    } catch (error) {
+      throw error;
+    }
+  };
   return (
     <div>
-      <div className="imageBackground">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-green-500 to-green-600">
         <div id="wrapper">
           <Card id="dialog" bordered={false}>
             <Form
               style={{ width: 400, marginBottom: 8 }}
               name="normal_login"
               className="loginform"
-              //
+              initialValues={{
+                remember: true,
+              }}
+              onFinish={onFinish}
             >
               <Form.Item style={{ marginBottom: 3 }}>
                 <Divider
                   style={{ marginBottom: 5, fontSize: 19 }}
                   orientation="center"
                 >
-                  Insight Book
+                  Book Garden
                 </Divider>
               </Form.Item>
               <Form.Item style={{ marginBottom: 16 }}>
@@ -94,7 +150,7 @@ const RegisterCustomer = () => {
               >
                 <Input
                   prefix={<MailOutlined className="siteformitemicon" />}
-                  placeholder="e-mail!"
+                  placeholder="Email"
                 />
               </Form.Item>
 
@@ -122,7 +178,7 @@ const RegisterCustomer = () => {
 
               <Form.Item style={{ marginBottom: 18 }}>
                 <Button
-                  className="loginformbutton"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md"
                   type="primary"
                   htmlType="submit"
                 >
