@@ -129,8 +129,7 @@ const Home = () => {
       return () => clearInterval(interval);
     })();
   }, [countdownDate]);
- 
-  
+
   return (
     <Spin spinning={false}>
       <div
