@@ -2,10 +2,9 @@ import React from "react";
 import { Route, Redirect } from "react-router-dom";
 
 const PublicRoute = ({ children, ...rest }) => {
+  // Kiểm tra trạng thái đăng nhập
   const checkAuth = () => {
-    console.log(localStorage.getItem("client"));
-    if (localStorage.getItem("client") !== null) return false;
-    return true;
+    return localStorage.getItem("client") === null; // Trả về `true` nếu chưa đăng nhập
   };
 
   return (

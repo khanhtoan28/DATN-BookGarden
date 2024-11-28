@@ -5,6 +5,8 @@ import PublicRoute from "../components/PublicRoute";
 import Footer from "../components/layout/Footer/footer";
 import Header from "../components/layout/Header/header";
 
+import Profile from "../pages/Profile/profile";
+
 import { Layout } from "antd";
 import { withRouter } from "react-router";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
@@ -23,9 +25,15 @@ const RouterURL = withRouter(({ location }) => {
             <Route exact path="/home">
               <Home />
             </Route>
+
             <PrivateRoute exact path="/cart-history">
               <CartHistory />
             </PrivateRoute>
+
+            <Route exact path="/profile">
+              <Profile />
+            </Route>
+
           </Switch>
           <Layout>
             <Footer />
@@ -76,6 +84,7 @@ const RouterURL = withRouter(({ location }) => {
   );
 
   return (
+
     <div>
       <Router>
         <Switch>
@@ -96,12 +105,32 @@ const RouterURL = withRouter(({ location }) => {
             <PrivateContainer />
           </Route>
 
-          <Route exact path="/reset-password/:id">
-            <PublicContainer />
-          </Route>
-        </Switch>
-      </Router>
-    </div>
+    <Router>
+      <Switch>
+        <Route exact path="/">
+          <PublicContainer />
+        </Route>
+
+
+        <Route exact path="/login">
+          <LoginContainer />
+        </Route>
+        <Route exact path="/register">
+          <LoginContainer />
+        </Route>
+        <Route exact path="/profile">
+          <PrivateContainer />
+        </Route>
+
+        <Route exact path="/home">
+          <PrivateContainer />
+        </Route>
+
+        <Route exact path="/reset-password/:id">
+          <PublicContainer />
+        </Route>
+      </Switch>
+    </Router>
   );
 });
 
