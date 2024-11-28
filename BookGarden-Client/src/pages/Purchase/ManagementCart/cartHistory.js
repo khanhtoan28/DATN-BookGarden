@@ -1,5 +1,6 @@
 import {
   Breadcrumb,
+  Button,
   Card,
   Divider,
   Modal,
@@ -12,6 +13,7 @@ import moment from "moment";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import axiosClient from "../../../apis/axiosClient";
+import eventApi from "../../../apis/eventApi";
 import productApi from "../../../apis/productApi";
 import "./cartHistory.css";
 
@@ -19,6 +21,48 @@ const CartHistory = () => {
   const [orderList, setOrderList] = useState([]);
   const [loading, setLoading] = useState(true);
   const { id } = useParams();
+  const history = useHistory();
+
+  const handleCancelOrder = (order) => {
+    console.log(order);
+    Modal.confirm({
+      title: "Xác nhận hủy đơn hàng",
+      content: "Bạn có chắc muốn hủy đơn hàng này?",
+      okText: "Xác nhận",
+      cancelText: "Hủy",
+      onOk() {
+        handleUpdateOrder(order._id);
+      },
+    });
+  };
+
+  const handleUpdateOrder = async (id) => {
+    setLoading(true);
+    try {
+      const categoryList = {
+        description: "Khách hàng hủy đơn hàng!",
+        status: "rejected",
+      };
+      await axiosClient.put("/order/" + id, categoryList).then((response) => {
+        if (response === undefined) {
+          notification["error"]({
+            message: `Thông báo`,
+            description: "Cập nhật thất bại",
+          });
+        } else {
+          notification["success"]({
+            message: `Thông báo`,
+            description: "Cập nhật thành công",
+          });
+        }
+      });
+
+      handleList();
+      setLoading(false);
+    } catch (error) {
+      throw error;
+    }
+  };
 
   const columns = [
     {
@@ -165,6 +209,24 @@ const CartHistory = () => {
     },
   ];
 
+  const handleList = () => {
+    (async () => {
+      try {
+        await productApi.getOrderByUser().then((item) => {
+          console.log(item);
+          setOrderList(item);
+        });
+        setLoading(false);
+      } catch (error) {
+        console.log("Failed to fetch event detail:" + error);
+      }
+    })();
+  };
+
+  useEffect(() => {
+    handleList();
+    window.scrollTo(0, 0);
+  }, []);
   return (
     <div>
       <Spin spinning={false}>
