@@ -85,7 +85,12 @@ const OrderDetail = lazy(() => {
     new Promise((resolve) => setTimeout(resolve, 0)),
   ]).then(([moduleExports]) => moduleExports);
 });
-
+const Profile = lazy(() => {
+  return Promise.all([
+    import("../pages/Profile/profile"),
+    new Promise((resolve) => setTimeout(resolve, 0)),
+  ]).then(([moduleExports]) => moduleExports);
+});
 const RouterURL = withRouter(({ location }) => {
   const LoginContainer = () => (
     <div>
@@ -176,6 +181,11 @@ const RouterURL = withRouter(({ location }) => {
                 <OrderDetail />
               </Suspense>
             </PrivateRoute>
+            <PrivateRoute exact path="/profile">
+              <Suspense fallback={<LoadingScreen />}>
+                <Profile />
+              </Suspense>
+            </PrivateRoute>
           </Content>
           <Footer />
         </Layout>
@@ -227,7 +237,9 @@ const RouterURL = withRouter(({ location }) => {
           <Route exact path="/order-details/:id">
             <DefaultContainer />
           </Route>
-
+          <Route exact path="/profile">
+            <DefaultContainer />
+          </Route>
           <Route>
             <NotFound />
           </Route>
