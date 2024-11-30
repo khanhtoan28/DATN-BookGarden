@@ -43,7 +43,6 @@ import {
 import eventApi from "../../apis/eventApi";
 import productApi from "../../apis/productsApi";
 import { useHistory } from "react-router-dom";
-import { DateTime } from "../../utils/dateTime";
 import ProductList from "../ProductList/productList";
 import axiosClient from "../../apis/axiosClient";
 import { PageHeader } from "@ant-design/pro-layout";
@@ -558,8 +557,6 @@ const AuthorList = () => {
             </Form.Item>
           </Form>
         </Modal>
-
-        {/* <Pagination style={{ textAlign: "center", marginBottom: 20 }} current={currentPage} defaultCurrent={1} total={total} onChange={handlePage}></Pagination> */}
         <BackTop style={{ textAlign: "right" }} />
       </Spin>
     </div>
