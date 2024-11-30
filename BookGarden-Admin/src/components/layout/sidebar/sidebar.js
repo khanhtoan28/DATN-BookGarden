@@ -8,6 +8,9 @@ import {
   CloudUploadOutlined,
   UnorderedListOutlined,
   FolderOutlined,
+  DashboardOutlined,
+  UserOutlined,
+  ShoppingCartOutlined,
 } from "@ant-design/icons";
 
 const { SubMenu } = Menu;
@@ -18,6 +21,24 @@ function Sidebar() {
   const location = useLocation();
 
   const menuSidebarAdmin = [
+    {
+      key: "dashboard",
+      title: "Dashboard",
+      link: "/dashboard",
+      icon: <DashboardOutlined />,
+    },
+    {
+      key: "account-management",
+      title: "Quản Lý Tài Khoản",
+      link: "/account-management",
+      icon: <UserOutlined />,
+    },
+    {
+      key: "order-list",
+      title: "Quản lý đơn hàng",
+      link: "/order-list",
+      icon: <ShoppingCartOutlined />,
+    },
     {
       key: "product-list",
       title: "Danh sách sản phẩm",
