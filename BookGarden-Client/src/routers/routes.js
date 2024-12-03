@@ -2,6 +2,7 @@ import React from "react";
 import Home from "../pages/Home/home";
 import Login from "../pages/Login/login";
 import PublicRoute from "../components/PublicRoute";
+import PrivateRoute from "../components/PrivateRoute";
 import Footer from "../components/layout/Footer/footer";
 import Header from "../components/layout/Header/header";
 import ProductDetail from "../pages/Product/ProductDetail/productDetail";
@@ -19,9 +20,20 @@ const RouterURL = withRouter(({ location }) => {
       <Layout style={{ minHeight: "100vh" }}>
         <Layout style={{ display: "flex" }}>
           <Header />
-          <Route exact path="/home">
-            <Home />
-          </Route>
+          <Switch>
+            <Route exact path="/home">
+              <Home />
+            </Route>
+            <PrivateRoute exact path="/event-detail/:id">
+              <ProductDetail />
+            </PrivateRoute>
+            <PrivateRoute exact path="/product-list">
+              <ProductList />
+            </PrivateRoute>
+            <PrivateRoute exact path="/:id">
+              <ProductList />
+            </PrivateRoute>
+          </Switch>
           <Layout>
             <Footer />
           </Layout>
@@ -39,9 +51,17 @@ const RouterURL = withRouter(({ location }) => {
             <Route exact path="/">
               <Home />
             </Route>
-
+            <Route exact path="/product-detail/:id">
+              <ProductDetail />
+            </Route>
+            <Route exact path="/product-list">
+              <ProductList />
+            </Route>
             <Route exact path="/reset-password/:id">
               <ResetPassword />
+            </Route>
+            <Route exact path="/:id">
+              <ProductList />
             </Route>
           </Switch>
           <Layout>
@@ -96,8 +116,13 @@ const RouterURL = withRouter(({ location }) => {
           <Route exact path="/reset-password/:id">
             <PublicContainer />
           </Route>
-
+          <Route exact path="/product-list">
+            <PublicContainer />
+          </Route>
           <Route exact path="/product-list/:id">
+            <PublicContainer />
+          </Route>
+          <Route exact path="/:id">
             <PublicContainer />
           </Route>
         </Switch>
