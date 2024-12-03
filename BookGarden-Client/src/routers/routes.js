@@ -13,6 +13,7 @@ import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import ProductList from "../pages/Product/ProductList/productList";
 import Register from "../pages/Register/register";
 import ResetPassword from "../pages/ResetPassword/resetPassword";
+import Cart from "../pages/Purchase/Cart/cart";
 
 const RouterURL = withRouter(({ location }) => {
   const PrivateContainer = () => (
@@ -53,6 +54,9 @@ const RouterURL = withRouter(({ location }) => {
             </Route>
             <Route exact path="/product-detail/:id">
               <ProductDetail />
+            </Route>
+            <Route exact path="/cart">
+              <Cart />
             </Route>
             <Route exact path="/product-list">
               <ProductList />
@@ -99,6 +103,10 @@ const RouterURL = withRouter(({ location }) => {
           </Route>
 
           <Route exact path="/product-detail/:id">
+            <PublicContainer />
+          </Route>
+
+          <Route exact path="/cart">
             <PublicContainer />
           </Route>
 
