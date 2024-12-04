@@ -212,13 +212,16 @@ const CartHistory = () => {
   const handleList = () => {
     (async () => {
       try {
-        await productApi.getOrderByUser().then((item) => {
-          console.log(item);
-          setOrderList(item);
-        });
+        const response = await productApi.getOrderByUser();
+        if (response && response.data) {
+          const sortedOrders = response.data.sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          );
+          setOrderList({ ...response, data: sortedOrders }); // Sắp xếp và cập nhật danh sách đơn hàng
+        }
         setLoading(false);
       } catch (error) {
-        console.log("Failed to fetch event detail:" + error);
+        console.error("Failed to fetch order list:", error);
       }
     })();
   };
