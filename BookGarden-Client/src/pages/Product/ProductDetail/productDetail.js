@@ -41,9 +41,6 @@ const ProductDetail = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef(null);
-  const [showAudioPlayer, setShowAudioPlayer] = useState(false);
 
   const addCart = (product) => {
     console.log(product);
@@ -53,6 +50,7 @@ const ProductDetail = () => {
       (item) => item._id === product._id
     );
     if (existingItemIndex !== -1) {
+      // If product already exists in the cart, increase its stock
       updatedItems = existingItems.map((item, index) => {
         if (index === existingItemIndex) {
           return {
@@ -63,6 +61,7 @@ const ProductDetail = () => {
         return item;
       });
     } else {
+      // If product does not exist in the cart, add it to the cart
       updatedItems = [...existingItems, { ...product, stock: 1 }];
     }
     console.log(updatedItems.length);
@@ -159,21 +158,25 @@ const ProductDetail = () => {
       try {
         const local = localStorage.getItem("user");
         const user = JSON.parse(local);
-        setUser(user);
-
-        await productApi.getDetailProduct(id).then((item) => {
-          setProductDetail(item.product);
-          setProductReview(item.reviews);
-          setProductReviewCount(item.reviewStats);
-          setAvgRating(item.avgRating);
-          console.log(((reviewsCount[4] || 0) / reviews.length) * 100);
-        });
-        await productApi.getRecommendProduct(id).then((item) => {
-          setRecommend(item?.recommendations);
-        });
+        setUser (user);
+  
+        const productResponse = await productApi.getDetailProduct(id);
+        console.log("Product Response:", productResponse);
+  
+        
+        if (productResponse && productResponse.product) {
+          setProductDetail(productResponse.product);
+        } else {
+          console.error("Product data is not available in the response.");
+        }
+  
+        const recommendResponse = await productApi.getRecommendProduct(id);
+        console.log("Recommendations Response:", recommendResponse); 
+        setRecommend(recommendResponse?.recommendations);
+  
         setLoading(false);
       } catch (error) {
-        console.log("Failed to fetch event detail:" + error);
+        console.log("Failed to fetch event detail:", error);
       }
     })();
   };
@@ -194,7 +197,7 @@ const ProductDetail = () => {
                   {/* <HomeOutlined /> */}
                   <span>Trang chủ</span>
                 </Breadcrumb.Item>
-                <Breadcrumb.Item href="http://localhost:3500/product-list">
+                <Breadcrumb.Item href="http://localhost:3500/product-list/643cd88879b4192efedda4e6">
                   {/* <AuditOutlined /> */}
                   <span>Sản phẩm</span>
                 </Breadcrumb.Item>
