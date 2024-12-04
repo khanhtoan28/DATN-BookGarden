@@ -23,7 +23,6 @@ import axiosClient from "../../../apis/axiosClient";
 import productApi from "../../../apis/productApi";
 import triangleTopRight from "../../../assets/icon/Triangle-Top-Right.svg";
 import { numberWithCommas } from "../../../utils/common";
-import AudioPlayer from "react-h5-audio-player";
 import "react-h5-audio-player/lib/styles.css";
 
 import "./productDetail.css";
@@ -42,26 +41,9 @@ const ProductDetail = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 
-  const viewBookOnline = (url) => {
-    window.location.href = url;
-  };
-
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
-
-  const handleListenBook = () => {
-    setShowAudioPlayer(true);
-
-    if (audioRef.current && audioRef.current.audio.current) {
-      if (isPlaying) {
-        audioRef.current.audio.current.pause(); // Dừng phát âm thanh
-      } else {
-        audioRef.current.audio.current.play(); // Phát âm thanh
-      }
-    }
-    setIsPlaying(!isPlaying); // Cập nhật trạng thái phát nhạc
-  };
 
   const addCart = (product) => {
     console.log(product);
@@ -71,7 +53,6 @@ const ProductDetail = () => {
       (item) => item._id === product._id
     );
     if (existingItemIndex !== -1) {
-      // If product already exists in the cart, increase its stock
       updatedItems = existingItems.map((item, index) => {
         if (index === existingItemIndex) {
           return {
@@ -82,7 +63,6 @@ const ProductDetail = () => {
         return item;
       });
     } else {
-      // If product does not exist in the cart, add it to the cart
       updatedItems = [...existingItems, { ...product, stock: 1 }];
     }
     console.log(updatedItems.length);
@@ -214,7 +194,7 @@ const ProductDetail = () => {
                   {/* <HomeOutlined /> */}
                   <span>Trang chủ</span>
                 </Breadcrumb.Item>
-                <Breadcrumb.Item href="http://localhost:3500/product-list/643cd88879b4192efedda4e6">
+                <Breadcrumb.Item href="http://localhost:3500/product-list">
                   {/* <AuditOutlined /> */}
                   <span>Sản phẩm</span>
                 </Breadcrumb.Item>

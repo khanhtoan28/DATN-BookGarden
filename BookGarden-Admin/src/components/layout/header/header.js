@@ -13,11 +13,7 @@ import {
   Avatar,
   Menu,
 } from "antd";
-import {
-  TranslationOutlined,
-  BellOutlined,
-  NotificationTwoTone,
-} from "@ant-design/icons";
+import { TranslationOutlined, NotificationTwoTone } from "@ant-design/icons";
 import userApi from "../../../apis/userApi";
 
 const { Header } = Layout;
