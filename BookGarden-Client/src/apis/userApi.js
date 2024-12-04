@@ -17,10 +17,30 @@ const userApi = {
         return response;
       });
   },
-
   logout(data) {
     const url = "/user/logout";
     return axiosClient.get(url);
   },
+  pingRole() {
+    const url = "/user/ping_role";
+    return axiosClient.get(url);
+  },
+  getProfile() {
+    const url = "/user/profile";
+    return axiosClient.get(url);
+  },
+  getProfileById(id) {
+    const url = "/user/profile/" + id;
+    return axiosClient.get(url);
+  },
+  updateProfile(editedUserData) {
+    const url = "/user/" + editedUserData._id;
+    return axiosClient.put(url, editedUserData);
+  },
+  forgotPassword(data) {
+    const url = "/user/forgot-password";
+    return axiosClient.post(url, data);
+  },
 };
+
 export default userApi;

@@ -2,7 +2,6 @@ import React, { Suspense } from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter } from "react-router-dom";
 import Router from "./routers/routes";
-import reportWebVitals from "./reportWebVitals";
 import "./index.css";
 function App() {
   return (
@@ -22,5 +21,3 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById("root")
 );
-
-reportWebVitals();

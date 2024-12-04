@@ -64,22 +64,26 @@ module.exports = {
     res.pulisher = pulisher;
     next();
   },
-  getProduct: async (req, res, next) => {
+  getProduct: async (req, res) => {
     try {
       const productId = req.params.id;
       console.log("Product ID:", productId);
-
+  
       // Lấy thông tin sản phẩm
       const product = await Product.findById(productId).populate("category");
       if (!product) {
         return res.status(404).json({ message: "Cannot find product" });
       }
+  
+      res.status(200).json({
+        product: product
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Server error" });
     }
-    next();
   },
+  
 
   getOrder: async (req, res, next) => {
     try {

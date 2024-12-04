@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import "./header.css";
-import logo from "../../../assets/image/logo-dtu.png";
 import MenuDropdown from "../../DropdownMenu/dropdownMenu";
 import {
   Layout,
@@ -14,14 +13,8 @@ import {
   Avatar,
   Menu,
 } from "antd";
-import {
-  TranslationOutlined,
-  BellOutlined,
-  NotificationTwoTone,
-} from "@ant-design/icons";
+import { TranslationOutlined, NotificationTwoTone } from "@ant-design/icons";
 import userApi from "../../../apis/userApi";
-import en from "../../../assets/image/en.png";
-import vn from "../../../assets/image/vn.png";
 
 const { Header } = Layout;
 
@@ -96,7 +89,6 @@ function Topbar() {
             height: 18,
             marginRight: 8,
           }}
-          src={vn}
         />
         <a target="_blank" rel="noopener noreferrer">
           VIỆT NAM
@@ -112,7 +104,6 @@ function Topbar() {
             height: 18,
             marginRight: 8,
           }}
-          src={en}
         />
         <a target="_blank" rel="noopener noreferrer">
           ENGLISH

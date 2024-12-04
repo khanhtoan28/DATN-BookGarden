@@ -8,7 +8,8 @@ const path = require("path");
 const DB_MONGO = require("./app/config/db.config");
 const _CONST = require("./app/config/constant");
 // const { sendEmailNotification } = require('./app/kafka/consumer');
-
+const nodemailer = require("nodemailer");
+require("dotenv").config();
 //router
 const authRoute = require("./app/routers/auth");
 const userRoute = require("./app/routers/user");
@@ -16,6 +17,7 @@ const productRoute = require("./app/routers/product");
 const categoryRoute = require("./app/routers/category");
 const authorRoute = require("./app/routers/author");
 const pulisherRoute = require("./app/routers/pulisher");
+const statisticalRoute = require("./app/routers/statistical");
 const uploadFileRoute = require("./app/routers/uploadFile");
 const orderRoute = require("./app/routers/order");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -40,6 +42,8 @@ app.use("/api/author", authorRoute);
 app.use("/api/pulisher", pulisherRoute);
 app.use("/api/uploadFile", uploadFileRoute);
 app.use("/api/order", orderRoute);
+app.use("/api/statistical", statisticalRoute);
+
 app.use("/uploads", express.static("uploads"));
 // sendEmailNotification();
 
