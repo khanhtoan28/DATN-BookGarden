@@ -12,10 +12,10 @@ import Profile from "../pages/Profile/profile";
 import Cart from "../pages/Purchase/Cart/cart";
 import Pay from "../pages/Purchase/Pay/pay";
 import CartHistory from "../pages/Purchase/ManagementCart/cartHistory";
-
+import News from "../pages/News/news";
+import Contact from "../pages/Contact/contact";
 import { Layout } from "antd";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import FinalPay from "../pages/Purchase/FinalPay/finalPay";
 import Register from "../pages/Register/register";
 import ProductList from "../pages/Product/ProductList/productList";
 
@@ -37,9 +37,6 @@ const RouterURL = ({ location }) => {
             </PrivateRoute>
             <PrivateRoute exact path="/pay">
               <Pay />
-            </PrivateRoute>
-            <PrivateRoute exact path="/final-pay">
-              <FinalPay />
             </PrivateRoute>
             <PrivateRoute exact path="/cart-history">
               <CartHistory />
@@ -73,6 +70,12 @@ const RouterURL = ({ location }) => {
             </Route>
             <Route exact path="/cart">
               <Cart />
+            </Route>
+            <Route exact path="/contact">
+              <Contact />
+            </Route>
+            <Route exact path="/news">
+              <News />
             </Route>
             <Route exact path="/product-list">
               <ProductList />
@@ -121,6 +124,9 @@ const RouterURL = ({ location }) => {
           <Route exact path="/cart">
             <PublicContainer />
           </Route>
+          <Route exact path="/contact">
+            <PublicContainer />
+          </Route>
           <Route exact path="/login">
             <LoginContainer />
           </Route>
@@ -136,13 +142,13 @@ const RouterURL = ({ location }) => {
           <Route exact path="/profile">
             <PrivateContainer />
           </Route>
-          <Route exact path="/final-pay">
-            <PrivateContainer />
-          </Route>
           <Route exact path="/cart-history">
             <PrivateContainer />
           </Route>
           <Route exact path="/product-list">
+            <PublicContainer />
+          </Route>
+          <Route exact path="/news">
             <PublicContainer />
           </Route>
           <Route exact path="/reset-password/:id">
