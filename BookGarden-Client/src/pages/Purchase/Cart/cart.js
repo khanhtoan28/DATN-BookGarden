@@ -1,4 +1,7 @@
-import { CreditCardOutlined, LeftSquareOutlined } from "@ant-design/icons";
+import {
+  CreditCardOutlined,
+  LeftSquareOutlined,
+} from "@ant-design/icons";
 import {
   Breadcrumb,
   Button,
@@ -12,6 +15,7 @@ import {
   Spin,
   Statistic,
   Table,
+  Modal,
 } from "antd";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
@@ -28,10 +32,43 @@ const Cart = () => {
   let { id } = useParams();
   const history = useHistory();
 
-  const handlePay = () => {
-    history.push("/pay");
+  // Xử lý cập nhật giỏ hàng
+  const updateStock = (productId, newStock) => {
+    const updatedCart = productDetail.map((item) => {
+      if (item._id === productId) {
+        item.stock = newStock || 0;
+        item.total = item.salePrice * item.stock;
+      }
+      return item;
+    });
+    const total = updatedCart.reduce(
+      (acc, item) => acc + item.salePrice * item.stock,
+      0
+    );
+
+    setProductDetail(updatedCart);
+    setCartTotal(total);
+    setCartLength(updatedCart.length);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
+  // Xóa sản phẩm khỏi giỏ hàng
+  const handleDelete = (productId) => {
+    const updatedCart = productDetail.filter(
+      (item) => item._id !== productId
+    );
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    localStorage.setItem("cartLength", updatedCart.length);
+    setProductDetail(updatedCart);
+    setCartLength(updatedCart.length);
+    const total = updatedCart.reduce(
+      (acc, item) => acc + item.salePrice * item.stock,
+      0
+    );
+    setCartTotal(total);
+  };
+
+  // Xóa toàn bộ giỏ hàng
   const deleteCart = () => {
     localStorage.removeItem("cart");
     localStorage.setItem("cartLength", 0);
@@ -40,36 +77,41 @@ const Cart = () => {
     setCartLength(0);
   };
 
-  const updateStock = (productId, newStock) => {
-    if (newStock === 0) {
-      return handleDelete(productId);
-    }
-    const updatedCart = productDetail.map((item) => {
-      if (item._id === productId) {
-        item.stock = newStock;
-        item.total = item.salePrice * newStock;
-      }
-      return item;
+  // Hiển thị modal xác nhận xóa toàn bộ giỏ hàng
+  const confirmDeleteCart = () => {
+    Modal.confirm({
+      title: "Bạn có chắc chắn muốn xóa tất cả sản phẩm không?",
+      onOk: deleteCart,
     });
-    const total = updatedCart.reduce(
-      (acc, item) => acc + item.stock * item.salePrice,
+  };
+
+  // Lấy dữ liệu giỏ hàng từ localStorage
+  useEffect(() => {
+    const savedCart = localStorage.getItem("cart");
+    const cart = savedCart
+      ? JSON.parse(savedCart).map((item) => ({
+          ...item,
+          stock: item.stock || 1,
+        }))
+      : [];
+    setProductDetail(cart);
+    setCartLength(cart.length);
+    const total = cart.reduce(
+      (acc, item) => acc + item.salePrice * item.stock,
       0
     );
     setCartTotal(total);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
-    setProductDetail(updatedCart);
-  };
+    setLoading(false);
+    window.scrollTo(0, 0);
+  }, [cartLength]);
 
-  const handleDelete = (productId) => {
-    const updatedCart = productDetail.filter(
-      (product) => product._id !== productId
-    );
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
-    localStorage.setItem("cartLength", updatedCart.length);
-    setProductDetail(updatedCart);
-    setCartLength(updatedCart.length);
-  };
+  const handlePay = () => history.push("/pay");
 
+  const handleNavigateToHome = () => history.push("/");
+
+  const handleRowClick = (record) => history.push("/product-detail/" + record._id);
+
+  // Cột dữ liệu bảng
   const columns = [
     {
       title: "ID",
@@ -108,27 +150,20 @@ const Cart = () => {
       render: (text, record) => (
         <InputNumber
           min={0}
-          defaultValue={text > 0 ? text : 1} // Luôn hiển thị giá trị mặc định là 1 nếu text là 0 hoặc undefined
-          onChange={(value) => {
-            updateStock(record._id, value);
-          }}
+          defaultValue={text}
+          onChange={(value) => updateStock(record._id, value)}
         />
       ),
     },
     {
       title: "Thành tiền",
-      dataIndex: "totalPrice",
       key: "totalPrice",
       render: (text, record) => (
-        <div>
-          <div className="groupButton">
-            <a style={{ color: "green" }}>
-              {(record.salePrice * record.stock).toLocaleString("vi", {
-                style: "currency",
-                currency: "VND",
-              })}
-            </a>
-          </div>
+        <div style={{ color: "green" }}>
+          {(record.salePrice * record.stock).toLocaleString("vi", {
+            style: "currency",
+            currency: "VND",
+          })}
         </div>
       ),
     },
@@ -141,44 +176,14 @@ const Cart = () => {
     },
   ];
 
-  useEffect(() => {
-    const cart = (JSON.parse(localStorage.getItem("cart")) || []).map(
-      (item) => ({
-        ...item,
-        stock: 1, // Đặt `stock` thành 1 mặc định khi hiển thị trong giỏ hàng
-      })
-    );
-
-    setProductDetail(cart);
-
-    const cartLength = cart.length;
-    setCartLength(cartLength);
-
-    const total = cart.reduce(
-      (acc, item) => acc + item.stock * item.salePrice,
-      0
-    );
-    setCartTotal(total);
-    setLoading(false);
-    window.scrollTo(0, 0);
-  }, []);
-
-  const handleRowClick = (record) => {
-    history.push("/product-detail/" + record._id);
-  };
-
-  const handleNavigateToHome = () => {
-    history.push("/");
-  };
-
   return (
     <div>
       <div className="py-5">
         <Spin spinning={loading}>
           <Card className="container">
             <div className="box_cart">
-              <Layout className="box_cart">
-                <Content className="site-layout-background">
+              <Layout>
+                <Content>
                   <Breadcrumb>
                     <Breadcrumb.Item onClick={handleNavigateToHome}>
                       <LeftSquareOutlined style={{ fontSize: "24px" }} />
@@ -190,7 +195,7 @@ const Cart = () => {
                   <Row>
                     <Col span={12}>
                       <h4>
-                        <strong>{cartLength}</strong> Sản Phẩm
+                        <strong>{cartLength}</strong> Sản phẩm
                       </h4>
                     </Col>
                     <Col span={12}>
@@ -198,7 +203,7 @@ const Cart = () => {
                         type="default"
                         danger
                         style={{ float: "right" }}
-                        onClick={deleteCart}
+                        onClick={confirmDeleteCart}
                       >
                         Xóa tất cả
                       </Button>
