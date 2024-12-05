@@ -15,7 +15,6 @@ import CartHistory from "../pages/Purchase/ManagementCart/cartHistory";
 
 import { Layout } from "antd";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import FinalPay from "../pages/Purchase/FinalPay/finalPay";
 import Register from "../pages/Register/register";
 import ProductList from "../pages/Product/ProductList/productList";
 
@@ -37,9 +36,6 @@ const RouterURL = ({ location }) => {
             </PrivateRoute>
             <PrivateRoute exact path="/pay">
               <Pay />
-            </PrivateRoute>
-            <PrivateRoute exact path="/final-pay">
-              <FinalPay />
             </PrivateRoute>
             <PrivateRoute exact path="/cart-history">
               <CartHistory />
@@ -134,9 +130,6 @@ const RouterURL = ({ location }) => {
             <PrivateContainer />
           </Route>
           <Route exact path="/profile">
-            <PrivateContainer />
-          </Route>
-          <Route exact path="/final-pay">
             <PrivateContainer />
           </Route>
           <Route exact path="/cart-history">
