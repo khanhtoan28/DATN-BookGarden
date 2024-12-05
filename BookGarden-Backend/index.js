@@ -8,7 +8,8 @@ const path = require("path");
 const DB_MONGO = require("./app/config/db.config");
 const _CONST = require("./app/config/constant");
 // const { sendEmailNotification } = require('./app/kafka/consumer');
-
+const nodemailer = require("nodemailer");
+require("dotenv").config();
 //router
 const authRoute = require("./app/routers/auth");
 const userRoute = require("./app/routers/user");

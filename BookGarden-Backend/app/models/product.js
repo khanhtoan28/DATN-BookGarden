@@ -47,6 +47,9 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    pulisher: {
+      type: String,
+    },
     slide: {
       type: [String],
     },
