@@ -12,7 +12,8 @@ import Profile from "../pages/Profile/profile";
 import Cart from "../pages/Purchase/Cart/cart";
 import Pay from "../pages/Purchase/Pay/pay";
 import CartHistory from "../pages/Purchase/ManagementCart/cartHistory";
-
+import News from "../pages/News/news";
+import Contact from "../pages/Contact/contact";
 import { Layout } from "antd";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Register from "../pages/Register/register";
@@ -70,6 +71,12 @@ const RouterURL = ({ location }) => {
             <Route exact path="/cart">
               <Cart />
             </Route>
+            <Route exact path="/contact">
+              <Contact />
+            </Route>
+            <Route exact path="/news">
+              <News />
+            </Route>
             <Route exact path="/product-list">
               <ProductList />
             </Route>
@@ -117,6 +124,9 @@ const RouterURL = ({ location }) => {
           <Route exact path="/cart">
             <PublicContainer />
           </Route>
+          <Route exact path="/contact">
+            <PublicContainer />
+          </Route>
           <Route exact path="/login">
             <LoginContainer />
           </Route>
@@ -136,6 +146,9 @@ const RouterURL = ({ location }) => {
             <PrivateContainer />
           </Route>
           <Route exact path="/product-list">
+            <PublicContainer />
+          </Route>
+          <Route exact path="/news">
             <PublicContainer />
           </Route>
           <Route exact path="/reset-password/:id">
