@@ -410,7 +410,7 @@ const Pay = () => {
                   <LeftSquareOutlined style={{ fontSize: "24px" }} />
                   <span> Quay lại giỏ hàng</span>
                 </Breadcrumb.Item>
-                <Breadcrumb.Item href="">
+                <Breadcrumb.Item>
                   <span>Thanh toán</span>
                 </Breadcrumb.Item>
               </Breadcrumb>
