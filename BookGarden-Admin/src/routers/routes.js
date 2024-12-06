@@ -19,6 +19,12 @@ const Login = lazy(() => {
     new Promise((resolve) => setTimeout(resolve, 0)),
   ]).then(([moduleExports]) => moduleExports);
 });
+const Complaint = lazy(() => {
+  return Promise.all([
+    import("../pages/Complaint/complaint"),
+    new Promise((resolve) => setTimeout(resolve, 0)),
+  ]).then(([moduleExports]) => moduleExports);
+});
 
 const AccountManagement = lazy(() => {
   return Promise.all([
@@ -33,6 +39,7 @@ const AccountCreate = lazy(() => {
     new Promise((resolve) => setTimeout(resolve, 0)),
   ]).then(([moduleExports]) => moduleExports);
 });
+
 const ProductList = lazy(() => {
   return Promise.all([
     import("../pages/ProductList/productList"),
@@ -65,6 +72,13 @@ const DashBoard = lazy(() => {
   ]).then(([moduleExports]) => moduleExports);
 });
 
+const Profile = lazy(() => {
+  return Promise.all([
+    import("../pages/Profile/profile"),
+    new Promise((resolve) => setTimeout(resolve, 0)),
+  ]).then(([moduleExports]) => moduleExports);
+});
+
 const ChangePassword = lazy(() => {
   return Promise.all([
     import("../pages/ChangePassword/changePassword"),
@@ -85,12 +99,8 @@ const OrderDetail = lazy(() => {
     new Promise((resolve) => setTimeout(resolve, 0)),
   ]).then(([moduleExports]) => moduleExports);
 });
-const Profile = lazy(() => {
-  return Promise.all([
-    import("../pages/Profile/profile"),
-    new Promise((resolve) => setTimeout(resolve, 0)),
-  ]).then(([moduleExports]) => moduleExports);
-});
+
+
 const RouterURL = withRouter(({ location }) => {
   const LoginContainer = () => (
     <div>
@@ -99,10 +109,10 @@ const RouterURL = withRouter(({ location }) => {
           <Login />
         </Suspense>
       </PublicRoute>
-
       <PublicRoute exact path="/login">
         <Login />
       </PublicRoute>
+
       <PublicRoute exact path="/reset-password/:id">
         <ChangePassword />
       </PublicRoute>
@@ -125,6 +135,16 @@ const RouterURL = withRouter(({ location }) => {
             <PrivateRoute exact path="/dashboard">
               <Suspense fallback={<LoadingScreen />}>
                 <DashBoard />
+              </Suspense>
+            </PrivateRoute>
+            <PrivateRoute exact path="/complaint-list">
+              <Suspense fallback={<LoadingScreen />}>
+                <Complaint />
+              </Suspense>
+            </PrivateRoute>
+            <PrivateRoute exact path="/profile">
+              <Suspense fallback={<LoadingScreen />}>
+                <Profile />
               </Suspense>
             </PrivateRoute>
 
@@ -159,6 +179,7 @@ const RouterURL = withRouter(({ location }) => {
                 <CategoryList />
               </Suspense>
             </PrivateRoute>
+
             <PrivateRoute exact path="/author-list">
               <Suspense fallback={<LoadingScreen />}>
                 <AuthorList />
@@ -179,11 +200,6 @@ const RouterURL = withRouter(({ location }) => {
             <PrivateRoute exact path="/order-details/:id">
               <Suspense fallback={<LoadingScreen />}>
                 <OrderDetail />
-              </Suspense>
-            </PrivateRoute>
-            <PrivateRoute exact path="/profile">
-              <Suspense fallback={<LoadingScreen />}>
-                <Profile />
               </Suspense>
             </PrivateRoute>
           </Content>
@@ -230,16 +246,19 @@ const RouterURL = withRouter(({ location }) => {
           <Route exact path="/pulisher-list">
             <DefaultContainer />
           </Route>
-
+          <Route exact path="/profile">
+            <DefaultContainer />
+          </Route>
           <Route exact path="/order-list">
+            <DefaultContainer />
+          </Route>
+          <Route exact path="/complaint-list">
             <DefaultContainer />
           </Route>
           <Route exact path="/order-details/:id">
             <DefaultContainer />
           </Route>
-          <Route exact path="/profile">
-            <DefaultContainer />
-          </Route>
+
           <Route>
             <NotFound />
           </Route>
