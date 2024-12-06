@@ -22,6 +22,21 @@ module.exports = {
     }
   },
 
+  getNews: async (req, res, next) => {
+    let news;
+    try {
+      news = await News.findById(req.params.id);
+      if (news == null) {
+        return res.status(404).json({ message: "Cannot find news" });
+      }
+    } catch (err) {
+      return res.status(500).json({ message: err.message });
+    }
+
+    res.news = news;
+    next();
+  },
+  
   getCategory: async (req, res, next) => {
     let category;
     try {

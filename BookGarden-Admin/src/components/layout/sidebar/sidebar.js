@@ -45,6 +45,12 @@ function Sidebar() {
       link: "/product-list",
       icon: <FormOutlined />,
     },
+    {
+      key: "kl-list",
+      title: "Quản lý khiếu nại",
+      link: "/complaint-list",
+      icon: <ShoppingCartOutlined />,
+    }
   ];
 
   const categorySubMenu = [
