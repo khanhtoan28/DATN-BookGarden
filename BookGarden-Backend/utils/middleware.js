@@ -7,6 +7,7 @@ const Author = require("../app/models/author");
 const Pulisher = require("../app/models/pulisher");
 const Product = require("../app/models/product");
 const Order = require("../app/models/order");
+const News = require("../app/models/news");
 const User = require("../app/models/user");
 
 module.exports = {
@@ -36,7 +37,7 @@ module.exports = {
     res.news = news;
     next();
   },
-  
+
   getCategory: async (req, res, next) => {
     let category;
     try {
