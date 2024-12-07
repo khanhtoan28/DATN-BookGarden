@@ -11,6 +11,7 @@ import {
   DashboardOutlined,
   UserOutlined,
   ShoppingCartOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 
 const { SubMenu } = Menu;
@@ -34,23 +35,24 @@ function Sidebar() {
       icon: <UserOutlined />,
     },
     {
-      key: "order-list",
-      title: "Quản lý đơn hàng",
-      link: "/order-list",
-      icon: <ShoppingCartOutlined />,
-    },
-    {
       key: "product-list",
       title: "Danh sách sản phẩm",
       link: "/product-list",
       icon: <FormOutlined />,
     },
     {
+      key: "order-list",
+      title: "Quản lý đơn hàng",
+      link: "/order-list",
+      icon: <ShoppingCartOutlined />,
+    },
+
+    {
       key: "kl-list",
       title: "Quản lý khiếu nại",
       link: "/complaint-list",
-      icon: <ShoppingCartOutlined />,
-    }
+      icon: <ExclamationCircleOutlined />,
+    },
   ];
 
   const categorySubMenu = [
