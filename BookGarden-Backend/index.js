@@ -18,6 +18,7 @@ const pulisherRoute = require("./app/routers/pulisher");
 const uploadFileRoute = require("./app/routers/uploadFile");
 const orderRoute = require("./app/routers/order");
 const statisticalRoute = require("./app/routers/statistical");
+const newsRoute = require("./app/routers/news");
 const complaintModel = require("./app/models/complaintModel");
 const order = require("./app/models/order");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -43,6 +44,7 @@ app.use("/api/pulisher", pulisherRoute);
 app.use("/api/uploadFile", uploadFileRoute);
 app.use("/api/statistical", statisticalRoute);
 app.use("/api/order", orderRoute);
+app.use("/api/news", newsRoute);
 app.use("/uploads", express.static("uploads"));
 // sendEmailNotification();
 app.get("/api/complaint/:id", async (req, res) => {
