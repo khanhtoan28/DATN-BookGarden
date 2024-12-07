@@ -18,6 +18,14 @@ const productApi = {
     const url = "/category/products/" + id;
     return axiosClient.post(url);
   },
+  getNews() {
+    const url = "/news/search";
+    return axiosClient.post(url);
+  },
+  getNewDetail(id) {
+    const url = "/news/" + id;
+    return axiosClient.get(url);
+  },
   getRecommendProduct(id) {
     const url = "/product/recommend/" + id;
     return axiosClient.get(url);
