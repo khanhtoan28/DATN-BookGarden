@@ -185,7 +185,6 @@ const RouterURL = ({ location }) => {
           <Route exact path="/complaint/:id">
             <PublicContainer />
           </Route>
-          {/* Thêm route cho Category */}
           <Route exact path="/:id">
             <PublicContainer />
           </Route>
