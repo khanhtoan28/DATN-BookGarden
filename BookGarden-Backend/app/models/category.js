@@ -7,19 +7,6 @@ const CategorySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    description: {
-      type: String,
-      default: "",
-    },
-    slug: {
-      type: String,
-      default: "",
-    },
-    image: {
-      type: String,
-      default:
-        "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
-    },
   },
   { timestamps: true },
   { collection: "category" }
