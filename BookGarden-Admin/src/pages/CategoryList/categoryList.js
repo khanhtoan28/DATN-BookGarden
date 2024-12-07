@@ -6,49 +6,29 @@ import {
   Typography,
   Spin,
   Button,
-  Card,
-  Badge,
   Empty,
   Input,
   Space,
   Form,
-  Pagination,
   Modal,
   Popconfirm,
   notification,
   BackTop,
-  Tag,
   Breadcrumb,
-  Select,
   Table,
 } from "antd";
 import {
-  AppstoreAddOutlined,
-  QrcodeOutlined,
   DeleteOutlined,
   PlusOutlined,
-  EyeOutlined,
-  ExclamationCircleOutlined,
-  SearchOutlined,
-  CalendarOutlined,
-  UserOutlined,
-  TeamOutlined,
   HomeOutlined,
-  HistoryOutlined,
   ShoppingOutlined,
-  FormOutlined,
-  TagOutlined,
   EditOutlined,
 } from "@ant-design/icons";
-import eventApi from "../../apis/eventApi";
 import productApi from "../../apis/productsApi";
 import { useHistory } from "react-router-dom";
-import ProductList from "../ProductList/productList";
 import axiosClient from "../../apis/axiosClient";
 import { PageHeader } from "@ant-design/pro-layout";
 const { confirm } = Modal;
-const DATE_TIME_FORMAT = "DD/MM/YYYY HH:mm";
-const { Title } = Typography;
 
 const CategoryList = () => {
   const [category, setCategory] = useState([]);
@@ -275,13 +255,7 @@ const CategoryList = () => {
       key: "index",
       render: (text, record, index) => index + 1,
     },
-    {
-      title: "Ảnh",
-      dataIndex: "image",
-      key: "image",
-      render: (image) => <img src={image} style={{ height: 60 }} />,
-      width: "10%",
-    },
+
     {
       title: "Tên",
       dataIndex: "name",
@@ -452,26 +426,6 @@ const CategoryList = () => {
             >
               <Input placeholder="Tên" />
             </Form.Item>
-
-            <Form.Item
-              name="image"
-              label="Ảnh"
-              rules={[
-                {
-                  required: true,
-                  message: "Vui lòng nhập chọn ảnh!",
-                },
-              ]}
-              style={{ marginBottom: 10 }}
-            >
-              <input
-                type="file"
-                onChange={handleChangeImage}
-                id="avatar"
-                name="file"
-                accept="image/png, image/jpeg"
-              />
-            </Form.Item>
           </Form>
         </Modal>
 
@@ -518,20 +472,9 @@ const CategoryList = () => {
             >
               <Input placeholder="Tên" />
             </Form.Item>
-
-            <Form.Item name="image" label="Ảnh" style={{ marginBottom: 10 }}>
-              <input
-                type="file"
-                onChange={handleChangeImage}
-                id="avatar"
-                name="file"
-                accept="image/png, image/jpeg"
-              />
-            </Form.Item>
           </Form>
         </Modal>
 
-        {/* <Pagination style={{ textAlign: "center", marginBottom: 20 }} current={currentPage} defaultCurrent={1} total={total} onChange={handlePage}></Pagination> */}
         <BackTop style={{ textAlign: "right" }} />
       </Spin>
     </div>

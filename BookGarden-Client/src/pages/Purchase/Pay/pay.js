@@ -127,15 +127,22 @@ const Pay = () => {
       }, 1000);
     }
   };
-
+  const exchangeRate = 25000; // Giả sử 1 USD = 25000 VND
   const handlePayment = async (values) => {
     try {
+      // Tính toán tổng tiền (bao gồm phí ship)
+      const totalAmount = Number(totalPrice) + Number(totalFee);
+
+      // Chuyển đổi tổng tiền sang USD
+      const totalAmountInUSD = (totalAmount / exchangeRate).toFixed(2); // Giả sử bạn có tỷ giá hối đoái
+
       const productPayment = {
-        price: "800",
-        description: values.bookingDetails,
+        price: totalAmountInUSD.toString(), // Chuyển đổi thành chuỗi
+        description: values.description, // Sử dụng description từ form
         return_url: "http://localhost:3500" + location.pathname,
         cancel_url: "http://localhost:3500" + location.pathname,
       };
+
       const response = await axiosClient.post("/payment/pay", productPayment);
       if (response.approvalUrl) {
         localStorage.setItem("session_paypal", response.accessToken);
@@ -156,7 +163,6 @@ const Pay = () => {
     try {
       const queryParams = new URLSearchParams(window.location.search);
       const paymentId = queryParams.get("paymentId");
-      // const token = queryParams.get('token');
       const PayerID = queryParams.get("PayerID");
       const token = localStorage.getItem("session_paypal");
       const description = localStorage.getItem("description");
@@ -171,11 +177,12 @@ const Pay = () => {
         },
       });
 
-      console.log(response);
-
       if (response) {
         const local = localStorage.getItem("user");
         const currentUser = JSON.parse(local);
+
+        // Tính toán tổng số tiền (bao gồm phí ship)
+        const totalAmount = Number(totalPrice) + Number(totalFee);
 
         const formatData = {
           userId: currentUser._id,
@@ -184,34 +191,28 @@ const Pay = () => {
           description: description,
           status: "pending",
           products: productDetail,
-          orderTotal: Number(totalPrice) + Number(totalFee),
+          orderTotal: totalAmount, // Lưu tổng số tiền bao gồm phí ship
+          paymentId: paymentId, // Lưu paymentId
+          payerId: PayerID, // Lưu PayerID
         };
 
-        console.log(formatData);
-        await axiosClient.post("/order", formatData).then((response) => {
-          console.log(response);
-          if (response == undefined) {
-            notification["error"]({
-              message: `Thông báo`,
-              description: "Đặt hàng thất bại",
-            });
-          } else {
-            notification["success"]({
-              message: `Thông báo`,
-              description: "Đặt hàng thành công",
-            });
-            form.resetFields();
-            history.push("/final-pay");
-            localStorage.removeItem("cart");
-            localStorage.removeItem("cartLength");
-          }
-        });
-        notification["success"]({
-          message: `Thông báo`,
-          description: "Thanh toán thành công",
-        });
-
-        setShowModal(false);
+        // Gửi yêu cầu lưu đơn hàng vào CSDL
+        const orderResponse = await axiosClient.post("/order", formatData);
+        if (orderResponse) {
+          notification["success"]({
+            message: `Thông báo`,
+            description: "Đặt hàng thành công",
+          });
+          form.resetFields();
+          history.push("/final-pay");
+          localStorage.removeItem("cart");
+          localStorage.removeItem("cartLength");
+        } else {
+          notification["error"]({
+            message: `Thông báo`,
+            description: "Đặt hàng thất bại",
+          });
+        }
       } else {
         notification["error"]({
           message: `Thông báo`,
@@ -222,7 +223,10 @@ const Pay = () => {
       setShowModal(false);
     } catch (error) {
       console.error("Error executing payment:", error);
-      // Xử lý lỗi
+      notification["error"]({
+        message: `Thông báo`,
+        description: "Có lỗi xảy ra trong quá trình thanh toán.",
+      });
     }
   };
 
@@ -410,7 +414,7 @@ const Pay = () => {
                   <LeftSquareOutlined style={{ fontSize: "24px" }} />
                   <span> Quay lại giỏ hàng</span>
                 </Breadcrumb.Item>
-                <Breadcrumb.Item>
+                <Breadcrumb.Item href="">
                   <span>Thanh toán</span>
                 </Breadcrumb.Item>
               </Breadcrumb>
@@ -474,119 +478,124 @@ const Pay = () => {
 
                   <Form.Item
                     name="address5"
-                    label=" Tỉnh/Thành"
+                    label="Tỉnh/Thành"
                     hasFeedback
+                    rules={[
+                      { required: true, message: "Vui lòng chọn tỉnh/thành!" },
+                    ]}
                     style={{ marginBottom: 15 }}
                   >
-                    {/* <Input placeholder="Địa chỉ" /> */}
-                    <div className="mb-4">
-                      <Select
-                        placeholder="Chọn Tỉnh/Thành"
-                        className="w-full"
-                        allowClear
-                        onChange={(e) => fetchHuyen(e)}
-                      >
-                        {tinh.map((item) => {
-                          return (
-                            <Option
-                              style={{ color: "black" }}
-                              className="text-black"
-                              key={item.ProvinceID}
-                              value={item.ProvinceID}
-                            >
-                              <p style={{ color: "black" }}>
-                                {item.ProvinceName}
-                              </p>
-                            </Option>
-                          );
-                        })}
-                      </Select>
-                    </div>
+                    <Select
+                      placeholder="Chọn Tỉnh/Thành"
+                      className="w-full"
+                      allowClear
+                      onChange={(e) => fetchHuyen(e)}
+                    >
+                      {tinh.map((item) => (
+                        <Option key={item.ProvinceID} value={item.ProvinceID}>
+                          {item.ProvinceName}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
+
                   <Form.Item
                     name="address2"
                     label="Quận/Huyện"
                     hasFeedback
+                    rules={[
+                      { required: true, message: "Vui lòng chọn quận/huyện!" },
+                      () => ({
+                        validator(_, value) {
+                          if (!value && huyen.length === 0) {
+                            return Promise.reject(
+                              new Error("Vui lòng chọn tỉnh/thành trước!")
+                            );
+                          }
+                          return Promise.resolve();
+                        },
+                      }),
+                    ]}
                     style={{ marginBottom: 15 }}
                   >
-                    <div className="mb-4">
-                      <Select
-                        placeholder="Chọn Quận/Huyện"
-                        className="w-full"
-                        allowClear
-                        onChange={(e) => fetchXa(e)}
-                        disabled={!huyen.length}
-                      >
-                        {huyen.map((item) => (
-                          <Option key={item.DistrictID} value={item.DistrictID}>
-                            {item.DistrictName}
-                          </Option>
-                        ))}
-                      </Select>
-                    </div>
+                    <Select
+                      placeholder="Chọn Quận/Huyện"
+                      className="w-full"
+                      allowClear
+                      onChange={(e) => fetchXa(e)}
+                      disabled={!huyen.length}
+                    >
+                      {huyen.map((item) => (
+                        <Option key={item.DistrictID} value={item.DistrictID}>
+                          {item.DistrictName}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
+
                   <Form.Item
                     name="address3"
                     label="Xã/Phường"
                     hasFeedback
+                    rules={[
+                      { required: true, message: "Vui lòng chọn xã/phường!" },
+                      () => ({
+                        validator(_, value) {
+                          if (!value && xa.length === 0) {
+                            return Promise.reject(
+                              new Error("Vui lòng chọn quận/huyện trước!")
+                            );
+                          }
+                          return Promise.resolve();
+                        },
+                      }),
+                    ]}
                     style={{ marginBottom: 15 }}
                   >
-                    <div className="mb-4">
-                      <Select
-                        placeholder="Chọn Xã/Phường"
-                        className="w-full"
-                        allowClear
-                        onChange={(e) => {
-                          onGetPrice(e);
-                        }}
-                        disabled={!xa.length}
-                      >
-                        {xa.map((item) => (
-                          <Option key={item.WardCode} value={item.WardCode}>
-                            {item.WardName}
-                          </Option>
-                        ))}
-                      </Select>
-                    </div>
+                    <Select
+                      placeholder="Chọn Xã/Phường"
+                      className="w-full"
+                      allowClear
+                      onChange={(e) => onGetPrice(e)}
+                      disabled={!xa.length}
+                    >
+                      {xa.map((item) => (
+                        <Option key={item.WardCode} value={item.WardCode}>
+                          {item.WardName}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
 
                   <p>Phí ship</p>
                   <p className="font-bold text-black text-xl">
-                    {" "}
                     {totalFee?.toLocaleString()} VND
                   </p>
                   <p>Tổng tiền ( bao gồm phí ship)</p>
                   <p className="font-bold text-black text-xl">
-                    {" "}
-                    {(
-                      Number(totalPrice) + Number(totalFee)
-                    )?.toLocaleString()}{" "}
+                    {(Number(totalPrice) + Number(totalFee))?.toLocaleString()}{" "}
                     VND
                   </p>
-                  {/* <Form.Item
-                    name="total"
-                    label="Tổng tiền ( bao gồm phí ship)"
-                    hasFeedback
-                    style={{ marginBottom: 10 }}
-                  >
-                    <Input
-                      disabled
-                      defaultValue={
-                        totalFee != 0
-                          ? Number(totalPrice) + Number(totalFee)
-                          : 0
-                      }
-                      placeholder="Số điện thoại"
-                    />
-                  </Form.Item> */}
+
                   <Form.Item
                     name="address"
-                    label=" Nhập chi tiết số nhà , ngách ngõ "
+                    label="Nhập chi tiết số nhà, ngách ngõ"
                     hasFeedback
                     style={{ marginBottom: 15 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng nhập chi tiết địa chỉ!",
+                      },
+                      {
+                        min: 5,
+                        message: "Địa chỉ phải có ít nhất 5 ký tự!",
+                      },
+                    ]}
                   >
                     <Input placeholder="Chi tiết Địa chỉ" />
                   </Form.Item>
+
                   <Form.Item
                     name="description"
                     label="Lưu ý cho đơn hàng"
@@ -613,32 +622,21 @@ const Pay = () => {
                       <Radio value={"paypal"}>PAYPAL</Radio>
                     </Radio.Group>
                   </Form.Item>
-
-                  <Form.Item>
-                    <Button
-                      style={{
-                        background: "#FF8000",
-                        color: "#FFFFFF",
-                        float: "right",
-                        marginTop: 20,
-                        marginLeft: 8,
-                      }}
-                      htmlType="submit"
-                    >
-                      Hoàn thành
-                    </Button>
-                    <Button
-                      style={{
-                        background: "#FF8000",
-                        color: "#FFFFFF",
-                        float: "right",
-                        marginTop: 20,
-                      }}
+                  <div className="flex justify-end space-x-2 mt-4">
+                    <button
+                      className="border border-gray-300 text-gray-900 py-2 px-4 rounded hover:bg-gray-100"
                       onClick={CancelPay}
                     >
                       Trở về
-                    </Button>
-                  </Form.Item>
+                    </button>
+
+                    <button
+                      className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5"
+                      htmlType="submit"
+                    >
+                      Hoàn thành
+                    </button>
+                  </div>
                 </Form>
               </div>
             </div>
