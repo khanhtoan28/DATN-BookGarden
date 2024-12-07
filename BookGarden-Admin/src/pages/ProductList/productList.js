@@ -764,7 +764,6 @@ const ProductList = () => {
                   >
                     <Input placeholder="Giá gốc" type="number" />
                   </Form.Item>
-
                   <Form.Item
                     name="salePrice"
                     label="Giá giảm"
@@ -819,7 +818,6 @@ const ProductList = () => {
               >
                 <Input placeholder="Số trang" type="number" />
               </Form.Item>
-
               <Form.Item
                 name="weight"
                 label="Trọng lượng"
@@ -862,7 +860,6 @@ const ProductList = () => {
                   <Select.Option value="Bìa mềm">Bìa mềm</Select.Option>
                 </Select>
               </Form.Item>
-
               <Form.Item
                 name="image"
                 label="Ảnh"
