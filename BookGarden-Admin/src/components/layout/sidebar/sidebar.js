@@ -3,14 +3,15 @@ import "./sidebar.css";
 import { Layout, Menu } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import {
+  UserOutlined,
+  DashboardOutlined,
+  ShoppingCartOutlined,
   FormOutlined,
   EditOutlined,
+  DiffOutlined,
   CloudUploadOutlined,
   UnorderedListOutlined,
   FolderOutlined,
-  DashboardOutlined,
-  UserOutlined,
-  ShoppingCartOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
 
@@ -36,10 +37,11 @@ function Sidebar() {
     },
     {
       key: "product-list",
-      title: "Danh sách sản phẩm",
+      title: "Quản lý sản phẩm",
       link: "/product-list",
       icon: <FormOutlined />,
     },
+
     {
       key: "order-list",
       title: "Quản lý đơn hàng",
@@ -52,6 +54,12 @@ function Sidebar() {
       title: "Quản lý khiếu nại",
       link: "/complaint-list",
       icon: <ExclamationCircleOutlined />,
+    },
+    {
+      key: "news-list",
+      title: "Tin tức",
+      link: "/news-list",
+      icon: <DiffOutlined />,
     },
   ];
 
