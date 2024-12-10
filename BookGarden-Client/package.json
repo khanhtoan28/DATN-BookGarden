@@ -26,6 +26,7 @@
     "rc-tween-one": "^2.7.3",
     "react": "^17.0.2",
     "react-audio-player": "^0.17.0",
+    "react-confetti": "^6.1.0",
     "react-corner-ribbon": "0.0.5",
     "react-dom": "^17.0.2",
     "react-google-font-loader": "^1.1.0",
