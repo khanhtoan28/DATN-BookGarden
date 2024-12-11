@@ -1,7 +1,4 @@
-import {
-  CreditCardOutlined,
-  LeftSquareOutlined,
-} from "@ant-design/icons";
+import { CreditCardOutlined, LeftSquareOutlined } from "@ant-design/icons";
 import {
   Breadcrumb,
   Button,
@@ -15,7 +12,6 @@ import {
   Spin,
   Statistic,
   Table,
-  Modal,
 } from "antd";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
@@ -26,49 +22,16 @@ const { Content } = Layout;
 const Cart = () => {
   const [productDetail, setProductDetail] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [cartLength, setCartLength] = useState(0);
-  const [cartTotal, setCartTotal] = useState(0);
+  const [cartLength, setCartLength] = useState();
+  const [cartTotal, setCartTotal] = useState();
   const [form] = Form.useForm();
   let { id } = useParams();
   const history = useHistory();
 
-  // Xử lý cập nhật giỏ hàng
-  const updateStock = (productId, newStock) => {
-    const updatedCart = productDetail.map((item) => {
-      if (item._id === productId) {
-        item.stock = newStock || 0;
-        item.total = item.salePrice * item.stock;
-      }
-      return item;
-    });
-    const total = updatedCart.reduce(
-      (acc, item) => acc + item.salePrice * item.stock,
-      0
-    );
-
-    setProductDetail(updatedCart);
-    setCartTotal(total);
-    setCartLength(updatedCart.length);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  const handlePay = () => {
+    history.push("/pay");
   };
 
-  // Xóa sản phẩm khỏi giỏ hàng
-  const handleDelete = (productId) => {
-    const updatedCart = productDetail.filter(
-      (item) => item._id !== productId
-    );
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
-    localStorage.setItem("cartLength", updatedCart.length);
-    setProductDetail(updatedCart);
-    setCartLength(updatedCart.length);
-    const total = updatedCart.reduce(
-      (acc, item) => acc + item.salePrice * item.stock,
-      0
-    );
-    setCartTotal(total);
-  };
-
-  // Xóa toàn bộ giỏ hàng
   const deleteCart = () => {
     localStorage.removeItem("cart");
     localStorage.setItem("cartLength", 0);
@@ -76,42 +39,47 @@ const Cart = () => {
     setCartTotal(0);
     setCartLength(0);
   };
+  console.log(productDetail);
 
-  // Hiển thị modal xác nhận xóa toàn bộ giỏ hàng
-  const confirmDeleteCart = () => {
-    Modal.confirm({
-      title: "Bạn có chắc chắn muốn xóa tất cả sản phẩm không?",
-      onOk: deleteCart,
+  const updateStock = (productId, newStock) => {
+    // Tìm kiếm sản phẩm trong giỏ hàng
+    if (newStock === 0) {
+      return handleDelete(productId);
+    }
+    const updatedCart = productDetail.map((item) => {
+      if (item._id === productId) {
+        // Cập nhật số lượng và tính toán tổng tiền
+        item.stock = newStock;
+        item.total = item.salePrice * newStock;
+      }
+      return item;
     });
-  };
-
-  // Lấy dữ liệu giỏ hàng từ localStorage
-  useEffect(() => {
-    const savedCart = localStorage.getItem("cart");
-    const cart = savedCart
-      ? JSON.parse(savedCart).map((item) => ({
-          ...item,
-          stock: item.stock || 1,
-        }))
-      : [];
-    setProductDetail(cart);
-    setCartLength(cart.length);
-    const total = cart.reduce(
-      (acc, item) => acc + item.salePrice * item.stock,
+    const total = updatedCart.reduce(
+      (acc, item) => acc + item.stock * item.salePrice,
       0
     );
     setCartTotal(total);
-    setLoading(false);
-    window.scrollTo(0, 0);
-  }, [cartLength]);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    setProductDetail(updatedCart);
+  };
 
-  const handlePay = () => history.push("/pay");
+  const handleDelete = (productId) => {
+    const updatedCart = productDetail.filter(
+      (product) => product._id !== productId
+    );
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    localStorage.setItem("cartLength", updatedCart.length);
+    setProductDetail(updatedCart);
+    setCartLength(updatedCart.length);
 
-  const handleNavigateToHome = () => history.push("/");
+    // Tính lại tổng tiền
+    const total = updatedCart.reduce(
+      (acc, item) => acc + item.stock * item.salePrice,
+      0
+    );
+    setCartTotal(total);
+  };
 
-  const handleRowClick = (record) => history.push("/product-detail/" + record._id);
-
-  // Cột dữ liệu bảng
   const columns = [
     {
       title: "ID",
@@ -138,7 +106,7 @@ const Cart = () => {
       dataIndex: "salePrice",
       key: "salePrice",
       render: (text) => (
-        <a style={{ color: "red" }}>
+        <a>
           {text?.toLocaleString("vi", { style: "currency", currency: "VND" })}
         </a>
       ),
@@ -151,19 +119,24 @@ const Cart = () => {
         <InputNumber
           min={0}
           defaultValue={text}
-          onChange={(value) => updateStock(record._id, value)}
+          onChange={(value) => {
+            updateStock(record._id, value);
+          }}
         />
       ),
     },
     {
       title: "Thành tiền",
+      dataIndex: "totalPrice",
       key: "totalPrice",
       render: (text, record) => (
-        <div style={{ color: "green" }}>
-          {(record.salePrice * record.stock).toLocaleString("vi", {
-            style: "currency",
-            currency: "VND",
-          })}
+        <div>
+          <div className="groupButton">
+            {(record?.salePrice * record?.stock).toLocaleString("vi", {
+              style: "currency",
+              currency: "VND",
+            })}
+          </div>
         </div>
       ),
     },
@@ -171,66 +144,96 @@ const Cart = () => {
       title: "Hành động",
       key: "action",
       render: (text, record) => (
-        <Button onClick={() => handleDelete(record._id)}>Xóa</Button>
+        <Button type="danger" onClick={() => handleDelete(record._id)}>
+          Xóa
+        </Button>
       ),
     },
   ];
 
+  useEffect(() => {
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    setProductDetail(cart);
+    const cartLength = localStorage.getItem("cartLength") || 0;
+    setCartLength(parseInt(cartLength));
+    const total = cart.reduce(
+      (acc, item) => acc + item.stock * item.salePrice,
+      0
+    );
+    setCartTotal(total);
+    setLoading(false);
+    window.scrollTo(0, 0);
+  }, []);
+
+  // Thêm vào component của bạn
+  const handleRowClick = (record) => {
+    history.push("/product-detail/" + record._id);
+  };
+
+  const handleNavigateToHome = () => {
+    history.push("/"); // Chuyển hướng về trang home
+  };
+
   return (
     <div>
-      <div className="py-5">
-        <Spin spinning={loading}>
+      <div class="py-5">
+        <Spin spinning={false}>
           <Card className="container">
             <div className="box_cart">
-              <Layout>
-                <Content>
+              <Layout className="box_cart">
+                <Content className="site-layout-background">
                   <Breadcrumb>
                     <Breadcrumb.Item onClick={handleNavigateToHome}>
                       <LeftSquareOutlined style={{ fontSize: "24px" }} />
                       <span> Tiếp tục mua sắm</span>
                     </Breadcrumb.Item>
                   </Breadcrumb>
-                  <hr />
-                  <br />
+                  <hr></hr>
+                  <br></br>
                   <Row>
                     <Col span={12}>
                       <h4>
-                        <strong>{cartLength}</strong> Sản phẩm
+                        <strong>{cartLength}</strong> Sản Phẩm
                       </h4>
                     </Col>
                     <Col span={12}>
-                      <Button
-                        type="default"
-                        danger
-                        style={{ float: "right" }}
-                        onClick={confirmDeleteCart}
-                      >
-                        Xóa tất cả
+                      <Button type="default" danger style={{ float: "right" }}>
+                        <span onClick={() => deleteCart()}>Xóa tất cả</span>
                       </Button>
                     </Col>
                   </Row>
-                  <br />
+                  <br></br>
                   <Table
                     columns={columns}
                     dataSource={productDetail}
                     pagination={false}
                   />
+
                   <Divider orientation="right">
-                    <p>Thanh toán </p>
+                    <p>Thanh toán</p>
                   </Divider>
                   <Row justify="end">
                     <Col>
                       <h6>Tổng {cartLength} sản phẩm</h6>
                       <Statistic
-                        title="Tổng tiền"
-                        value={cartTotal.toLocaleString("vi-VN")}
+                        title="Tổng tiền (đã bao gồm VAT)."
+                        value={cartTotal}
+                        precision={0}
+                        formatter={(value) =>
+                          `${value.toLocaleString("vi", {
+                            style: "currency",
+                            currency: "VND",
+                          })}`
+                        }
                       />
+
                       <Button
                         style={{ marginTop: 16 }}
-                        onClick={handlePay}
-                        disabled={productDetail.length === 0}
+                        type="primary"
+                        onClick={() => handlePay()}
+                        disabled={productDetail.length === 0} // Nếu giỏ hàng trống, vô hiệu hóa button
                       >
-                        Thanh toán ngay
+                        Thanh toán ngay{" "}
                         <CreditCardOutlined style={{ fontSize: "20px" }} />
                       </Button>
                     </Col>
