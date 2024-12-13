@@ -13,14 +13,13 @@ import Cart from "../pages/Purchase/Cart/cart";
 import Pay from "../pages/Purchase/Pay/pay";
 import CartHistory from "../pages/Purchase/ManagementCart/cartHistory";
 import Contact from "../pages/Contact/contact";
-
+import NewsDetail from "../pages/NewsDetail/newsDetail";
 import { Layout } from "antd";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import FinalPay from "../pages/Purchase/FinalPay/finalPay";
 import Register from "../pages/Register/register";
 import ProductList from "../pages/Product/ProductList/productList";
 import News from "../pages/News/news";
-import NewsDetail from "../pages/News/news";
 import ResetPassword from "../pages/ResetPassword/resetPassword";
 import Complaint from "../pages/Complaint/complaint";
 
@@ -186,7 +185,6 @@ const RouterURL = ({ location }) => {
           <Route exact path="/complaint/:id">
             <PublicContainer />
           </Route>
-          {/* Thêm route cho Category */}
           <Route exact path="/:id">
             <PublicContainer />
           </Route>

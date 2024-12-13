@@ -3,14 +3,16 @@ import "./sidebar.css";
 import { Layout, Menu } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import {
+  UserOutlined,
+  DashboardOutlined,
+  ShoppingCartOutlined,
   FormOutlined,
   EditOutlined,
+  DiffOutlined,
   CloudUploadOutlined,
   UnorderedListOutlined,
   FolderOutlined,
-  DashboardOutlined,
-  UserOutlined,
-  ShoppingCartOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 
 const { SubMenu } = Menu;
@@ -34,23 +36,31 @@ function Sidebar() {
       icon: <UserOutlined />,
     },
     {
+      key: "product-list",
+      title: "Quản lý sản phẩm",
+      link: "/product-list",
+      icon: <FormOutlined />,
+    },
+
+    {
       key: "order-list",
       title: "Quản lý đơn hàng",
       link: "/order-list",
       icon: <ShoppingCartOutlined />,
     },
-    {
-      key: "product-list",
-      title: "Danh sách sản phẩm",
-      link: "/product-list",
-      icon: <FormOutlined />,
-    },
+
     {
       key: "kl-list",
       title: "Quản lý khiếu nại",
       link: "/complaint-list",
-      icon: <ShoppingCartOutlined />,
-    }
+      icon: <ExclamationCircleOutlined />,
+    },
+    {
+      key: "news-list",
+      title: "Tin tức",
+      link: "/news-list",
+      icon: <DiffOutlined />,
+    },
   ];
 
   const categorySubMenu = [

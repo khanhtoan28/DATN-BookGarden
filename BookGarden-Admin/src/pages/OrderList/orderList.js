@@ -22,6 +22,7 @@ import orderApi from "../../apis/orderApi";
 import { useHistory } from "react-router-dom";
 import axiosClient from "../../apis/axiosClient";
 import { PageHeader } from "@ant-design/pro-layout";
+
 const { Option } = Select;
 const { Title } = Typography;
 
@@ -153,11 +154,11 @@ const OrderList = () => {
           <Option value="shipping" disabled={status !== "confirmed"}>
             Đang vận chuyển
           </Option>
-          <Option value="final" disabled={status !== "shipping"}>
+          <Option value="shipped successfully" disabled={status !== "shipping"}>
             Giao hàng thành công
           </Option>
-          <Option value="returned" disabled={status !== "final"}>
-            Đã hoàn trả
+          <Option value="final" disabled={status !== "shipped successfully"}>
+            Hoàn thành
           </Option>
           <Option value="rejected" disabled={status !== "pending"}>
             Đã hủy

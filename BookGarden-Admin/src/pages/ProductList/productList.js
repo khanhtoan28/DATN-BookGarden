@@ -373,14 +373,22 @@ const ProductList = () => {
       title: "Giá gốc",
       key: "price",
       dataIndex: "price",
-      render: (slugs) => (
-        <span>
-          <div>
-            {slugs?.toLocaleString("vi", {
-              style: "currency",
-              currency: "VND",
-            })}
-          </div>
+      render: (price) => (
+        <span
+          style={{
+            display: "inline-block",
+            padding: "5px 10px",
+            backgroundColor: "red",
+            color: "white",
+            borderRadius: "5px",
+            fontWeight: "bold",
+            fontSize: "12px",
+          }}
+        >
+          {price?.toLocaleString("vi", {
+            style: "currency",
+            currency: "VND",
+          })}
         </span>
       ),
     },
@@ -389,20 +397,23 @@ const ProductList = () => {
       key: "salePrice",
       dataIndex: "salePrice",
       render: (salePrice) => (
-        <span>
-          <Tag color="red" key={salePrice}>
-            {salePrice?.toLocaleString("vi", {
-              style: "currency",
-              currency: "VND",
-            })}
-          </Tag>
+        <span
+          style={{
+            display: "inline-block",
+            padding: "5px 10px",
+            backgroundColor: "green",
+            color: "white",
+            borderRadius: "5px",
+            fontWeight: "bold",
+            fontSize: "12px",
+          }}
+        >
+          {salePrice?.toLocaleString("vi", {
+            style: "currency",
+            currency: "VND",
+          })}
         </span>
       ),
-    },
-    {
-      title: "Năm xuất bản",
-      key: "year",
-      dataIndex: "year",
     },
 
     {
@@ -410,42 +421,20 @@ const ProductList = () => {
       key: "stock",
       dataIndex: "stock",
       render: (stock) => (
-        <span>
-          <Tag color="green" key={stock}>
-            {stock}
-          </Tag>
+        <span
+          style={{
+            display: "inline-block",
+            padding: "5px 10px",
+            backgroundColor: "orange",
+            color: "white",
+            borderRadius: "5px",
+            fontWeight: "bold",
+            fontSize: "12px",
+          }}
+        >
+          {stock}
         </span>
       ),
-    },
-    {
-      title: "Số trang",
-      key: "pages",
-      dataIndex: "pages",
-    },
-    {
-      title: "Trọng lượng",
-      key: "weight",
-      dataIndex: "weight",
-      render: (weight) => (
-        <span>
-          <Tag color="green" key={weight}>
-            {weight} gr
-          </Tag>
-        </span>
-      ),
-    },
-
-    {
-      title: "Kích thước",
-      key: "size",
-      dataIndex: "size",
-      render: (text) => text,
-    },
-
-    {
-      title: "Bìa sách",
-      key: "form",
-      dataIndex: "form",
     },
 
     {
@@ -474,11 +463,53 @@ const ProductList = () => {
       render: (status) => (
         <span>
           {status === "Available" ? (
-            <Tag color="green">Còn hàng</Tag>
+            <span
+              style={{
+                display: "inline-block",
+                padding: "5px 10px",
+                backgroundColor: "green",
+                color: "white",
+                borderRadius: "5px",
+                fontWeight: "bold",
+                fontSize: "12px",
+                whiteSpace: "nowrap", // Ngăn xuống dòng
+                textAlign: "center",
+              }}
+            >
+              Còn hàng
+            </span>
           ) : status === "Unavailable" ? (
-            <Tag color="red">Hết hàng</Tag>
+            <span
+              style={{
+                display: "inline-block",
+                padding: "5px 10px",
+                backgroundColor: "red",
+                color: "white",
+                borderRadius: "5px",
+                fontWeight: "bold",
+                fontSize: "12px",
+                whiteSpace: "nowrap", // Ngăn xuống dòng
+                textAlign: "center",
+              }}
+            >
+              Hết hàng
+            </span>
           ) : (
-            <Tag color="yellow">Ngừng kinh doanh</Tag>
+            <span
+              style={{
+                display: "inline-block",
+                padding: "5px 10px",
+                backgroundColor: "#F9F400",
+                color: "white",
+                borderRadius: "5px",
+                fontWeight: "bold",
+                fontSize: "12px",
+                whiteSpace: "nowrap", // Ngăn xuống dòng
+                textAlign: "center",
+              }}
+            >
+              Ngừng kinh doanh
+            </span>
           )}
         </span>
       ),
@@ -644,11 +675,7 @@ const ProductList = () => {
           </div>
 
           <div style={{ marginTop: 30 }}>
-            <Table
-              columns={columns}
-              dataSource={product}
-              pagination={{ position: ["bottomCenter"] }}
-            />
+            <Table columns={columns} dataSource={product} size="small" />
           </div>
         </div>
 
@@ -737,7 +764,6 @@ const ProductList = () => {
                   >
                     <Input placeholder="Giá gốc" type="number" />
                   </Form.Item>
-
                   <Form.Item
                     name="salePrice"
                     label="Giá giảm"
@@ -792,7 +818,6 @@ const ProductList = () => {
               >
                 <Input placeholder="Số trang" type="number" />
               </Form.Item>
-
               <Form.Item
                 name="weight"
                 label="Trọng lượng"
@@ -835,7 +860,6 @@ const ProductList = () => {
                   <Select.Option value="Bìa mềm">Bìa mềm</Select.Option>
                 </Select>
               </Form.Item>
-
               <Form.Item
                 name="image"
                 label="Ảnh"

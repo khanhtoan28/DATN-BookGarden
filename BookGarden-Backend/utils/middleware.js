@@ -7,6 +7,7 @@ const Author = require("../app/models/author");
 const Pulisher = require("../app/models/pulisher");
 const Product = require("../app/models/product");
 const Order = require("../app/models/order");
+const News = require("../app/models/news");
 const User = require("../app/models/user");
 
 module.exports = {
@@ -36,7 +37,7 @@ module.exports = {
     res.news = news;
     next();
   },
-  
+
   getCategory: async (req, res, next) => {
     let category;
     try {
@@ -83,22 +84,26 @@ module.exports = {
     try {
       const productId = req.params.id;
       console.log("Product ID:", productId);
-  
+
       // Lấy thông tin sản phẩm
-      const product = await Product.findById(productId).populate("category");
+      // Lấy thông tin sản phẩm
+      const product = await Product.findById(productId)
+        .populate("category") // Lấy thông tin chi tiết từ bảng category
+        .populate("author") // Lấy thông tin chi tiết từ bảng author
+        .populate("pulisher"); // Lấy thông tin chi tiết từ bảng pulisher
+
       if (!product) {
         return res.status(404).json({ message: "Cannot find product" });
       }
-  
+
       res.status(200).json({
-        product: product
+        product: product,
       });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Server error" });
     }
   },
-  
 
   getOrder: async (req, res, next) => {
     try {
