@@ -22,6 +22,7 @@ const paymentRoute = require("./app/routers/paypal");
 const newsRoute = require("./app/routers/news");
 const complaintModel = require("./app/models/complaintModel");
 const order = require("./app/models/order");
+const vnpayRoute = require("./app/routers/vnpay");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
@@ -47,6 +48,7 @@ app.use("/api/statistical", statisticalRoute);
 app.use("/api/order", orderRoute);
 app.use("/api/payment", paymentRoute);
 app.use("/api/news", newsRoute);
+app.use("/api/vnpay", vnpayRoute);
 app.use("/uploads", express.static("uploads"));
 // sendEmailNotification();
 app.get("/api/complaint/:id", async (req, res) => {

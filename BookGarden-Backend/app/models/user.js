@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema(
     status: { type: String, default: "noactive" },
     image: {
       type: String,
-      required: true,
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,

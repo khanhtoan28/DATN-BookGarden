@@ -32,9 +32,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+const DATE_TIME_FORMAT = "DD/MM/YYYY HH:mm";
+
 const DashBoard = () => {
   const [orders, setOrder] = useState([]);
-  const [statisticList, setStatisticList] = useState({}); // Khởi tạo là object
+  const [statisticList, setStatisticList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
@@ -44,8 +46,8 @@ const DashBoard = () => {
       try {
         // Gọi thống kê tổng
         const statisticRes = await statisticApi.getTotal();
-        console.log("Statistic API response:", statisticRes); // Kiểm tra dữ liệu trả về
-        setStatisticList(statisticRes.data || {}); // Gán dữ liệu trả về, hoặc {} nếu undefined
+        setStatisticList(statisticRes.data);
+        setData(statisticRes.data.data);
 
         // Gọi đơn hàng mới nhất
         const orderRes = await orderApi.getListOrder({ page: 1, limit: 15 });
@@ -132,10 +134,10 @@ const DashBoard = () => {
                 <div className="card_number">
                   <div>
                     <div className="number_total">
-                      {statisticList?.totalIncome?.toLocaleString("vi", {
+                      {statisticList.totalIncome?.toLocaleString("vi", {
                         style: "currency",
                         currency: "VND",
-                      }) || "0 VND"}
+                      })}
                     </div>
                     <div className="title_total">Tổng doanh thu</div>
                   </div>
@@ -150,7 +152,7 @@ const DashBoard = () => {
                 <div className="card_number">
                   <div>
                     <div className="number_total">
-                      {statisticList?.productTotal || 0}
+                      {statisticList.productTotal || 0}
                     </div>
                     <div className="title_total">Số sản phẩm</div>
                   </div>
@@ -165,7 +167,7 @@ const DashBoard = () => {
                 <div className="card_number">
                   <div>
                     <div className="number_total">
-                      {statisticList?.categoryTotal || 0}
+                      {statisticList.categoryTotal || 0}
                     </div>
                     <div className="title_total">Số danh mục</div>
                   </div>
@@ -180,7 +182,7 @@ const DashBoard = () => {
                 <div className="card_number">
                   <div>
                     <div className="number_total">
-                      {statisticList?.orderTotal || 0}
+                      {statisticList.orderTotal}
                     </div>
                     <div className="title_total">Số đơn hàng</div>
                   </div>
@@ -197,7 +199,7 @@ const DashBoard = () => {
                 <div className="title">Thống kê đơn hàng trong 12 tháng</div>
                 <ResponsiveContainer width="100%" aspect={2 / 1}>
                   <AreaChart
-                    data={data || []}
+                    data={data}
                     margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
                   >
                     {/* Gradient màu */}
