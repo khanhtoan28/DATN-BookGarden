@@ -157,10 +157,11 @@ const OrderList = () => {
           <Option value="shipped successfully" disabled={status !== "shipping"}>
             Giao hàng thành công
           </Option>
-          <Option value="final" disabled={status !== "shipped successfully"}>
+          <Option value="final" disabled>
             Hoàn thành
           </Option>
-          <Option value="rejected" disabled={status !== "pending"}>
+
+          <Option value="rejected" disabled>
             Đã hủy
           </Option>
         </Select>

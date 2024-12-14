@@ -239,7 +239,7 @@ const orderController = {
       );
       const orders = await OrderModel.find({
         user: decodedToken.user._id,
-      }).populate("products.product"); // Chỉ lấy tên và giá sản phẩm
+      }).populate("products.product");
       res.status(200).json({ data: orders });
     } catch (err) {
       res.status(401).send("Unauthorized");
