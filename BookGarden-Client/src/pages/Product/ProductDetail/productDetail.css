@@ -207,3 +207,7 @@ hr {
   width: 100%;
   z-index: 9999;
 }
+.ant-message .anticon {
+  margin-right: 8px; /* Căn chỉnh khoảng cách giữa icon và text */
+  vertical-align: middle; /* Căn giữa icon với nội dung */
+}

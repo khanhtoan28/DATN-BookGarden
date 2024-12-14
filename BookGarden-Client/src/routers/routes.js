@@ -12,12 +12,16 @@ import Profile from "../pages/Profile/profile";
 import Cart from "../pages/Purchase/Cart/cart";
 import Pay from "../pages/Purchase/Pay/pay";
 import CartHistory from "../pages/Purchase/ManagementCart/cartHistory";
-import News from "../pages/News/news";
 import Contact from "../pages/Contact/contact";
+import NewsDetail from "../pages/NewsDetail/newsDetail";
 import { Layout } from "antd";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import FinalPay from "../pages/Purchase/FinalPay/finalPay";
 import Register from "../pages/Register/register";
 import ProductList from "../pages/Product/ProductList/productList";
+import News from "../pages/News/news";
+import ResetPassword from "../pages/ResetPassword/resetPassword";
+import Complaint from "../pages/Complaint/complaint";
 
 const RouterURL = ({ location }) => {
   const PrivateContainer = () => (
@@ -38,6 +42,9 @@ const RouterURL = ({ location }) => {
             <PrivateRoute exact path="/pay">
               <Pay />
             </PrivateRoute>
+            <PrivateRoute exact path="/final-pay">
+              <FinalPay />
+            </PrivateRoute>
             <PrivateRoute exact path="/cart-history">
               <CartHistory />
             </PrivateRoute>
@@ -46,6 +53,9 @@ const RouterURL = ({ location }) => {
             </PrivateRoute>
             <PrivateRoute exact path="/:id">
               <ProductList />
+            </PrivateRoute>
+            <PrivateRoute exact path="/complaint/:id">
+              <Complaint />
             </PrivateRoute>
           </Switch>
           <Layout>
@@ -77,8 +87,17 @@ const RouterURL = ({ location }) => {
             <Route exact path="/news">
               <News />
             </Route>
+            <Route exact path="/news/:id">
+              <NewsDetail />
+            </Route>
             <Route exact path="/product-list">
               <ProductList />
+            </Route>
+            <Route exact path="/reset-password/:id">
+              <ResetPassword />
+            </Route>
+            <Route exact path="/complaint/:id">
+              <Complaint />
             </Route>
             {/* Thêm route cho Category */}
             <Route exact path="/:id">
@@ -142,6 +161,9 @@ const RouterURL = ({ location }) => {
           <Route exact path="/profile">
             <PrivateContainer />
           </Route>
+          <Route exact path="/final-pay">
+            <PrivateContainer />
+          </Route>
           <Route exact path="/cart-history">
             <PrivateContainer />
           </Route>
@@ -151,10 +173,18 @@ const RouterURL = ({ location }) => {
           <Route exact path="/news">
             <PublicContainer />
           </Route>
+          <Route exact path="/news/:id">
+            <PublicContainer />
+          </Route>
           <Route exact path="/reset-password/:id">
             <PublicContainer />
           </Route>
-          {/* Thêm route cho Category */}
+          <Route exact path="/complaint">
+            <PublicContainer />
+          </Route>
+          <Route exact path="/complaint/:id">
+            <PublicContainer />
+          </Route>
           <Route exact path="/:id">
             <PublicContainer />
           </Route>

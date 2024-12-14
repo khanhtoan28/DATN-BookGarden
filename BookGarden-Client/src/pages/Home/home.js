@@ -50,85 +50,38 @@ const Home = () => {
     history.push("product-detail/" + id);
   };
 
-  const handleCategoryDetails = (id) => {
-    console.log(id);
-    history.push("product-list/" + id);
-  };
-
-  const onLoad = () => {
-    setVisible(false);
-  };
-
   useEffect(() => {
-    (async () => {
+    const fetchProducts = async () => {
       try {
-        const response = await productApi.getListProducts({
-          page: 1,
-          limit: 10,
-        });
-        setProductList(response.data.docs);
-        setTotalEvent(response);
-        setLoading(false);
-      } catch (error) {
-        console.log("Failed to fetch event list:" + error);
-      }
+        const data = { limit: 4, page: 1 };
 
-      try {
-        const response = await productApi.getListEvents(1, 6);
-        setEventListHome(response.data);
-        setTotalEvent(response.total_count);
-      } catch (error) {
-        console.log("Failed to fetch event list:" + error);
-      }
-      try {
-        const response = await productApi.getCategory({ limit: 10, page: 1 });
-        console.log(response);
-        setCategories(response.data.docs);
-      } catch (error) {
-        console.log(error);
-      }
-      try {
-        const data = { limit: 10, page: 1 };
-
-        // Lấy dữ liệu từ API và lọc các sản phẩm có trạng thái "available"
-        const response = await productApi.getProductsByCategory(
+        const responsePhone = await productApi.getProductsByCategory(
           data,
           "65fd67f2207e1639f49dc016"
         );
-        console.log(response);
-        setProductsPhone(response.data.docs);
+        // Lấy 4 sản phẩm đầu tiên
+        setProductsPhone(responsePhone.data.docs.slice(0, 4));
 
-        const response2 = await productApi.getProductsByCategory(
+        const responsePC = await productApi.getProductsByCategory(
           data,
-          "65fd67c2207e1639f49dc012"
+          "65fd6822207e1639f49dc01a"
         );
-        console.log(response2);
-        setProductsPC(response2.data.docs);
+        // Lấy 4 sản phẩm đầu tiên
+        setProductsPC(responsePC.data.docs.slice(0, 4));
 
-        const response3 = await productApi.getProductsByCategory(
+        const responseTablet = await productApi.getProductsByCategory(
           data,
           "65fd6755207e1639f49dbfe4"
         );
-        console.log(response3);
-        setProductsTablet(response3.data.docs);
+        // Lấy 4 sản phẩm đầu tiên
+        setProductsTablet(responseTablet.data.docs.slice(0, 4));
       } catch (error) {
         console.log(error);
       }
+    };
 
-      localStorage.setItem("countdownDate", countdownDate);
-
-      const interval = setInterval(() => {
-        const newTimeLeft = countdownDate - new Date().getTime();
-        setTimeLeft(newTimeLeft);
-
-        if (newTimeLeft <= 0) {
-          clearInterval(interval);
-        }
-      }, 1000);
-
-      return () => clearInterval(interval);
-    })();
-  }, [countdownDate]);
+    fetchProducts();
+  }, []);
 
   return (
     <Spin spinning={false}>
@@ -252,11 +205,7 @@ const Home = () => {
                         className="badge"
                         style={{ position: "absolute", top: 10, left: 9 }}
                       >
-                        {item?.audioUrl ? (
-                          <span>Sách nói</span>
-                        ) : (
-                          <span>Giảm giá</span>
-                        )}
+                        {<span>Giảm giá</span>}
                         <img src={triangleTopRight} alt="Triangle" />
                       </Paragraph>
                     )
@@ -413,11 +362,7 @@ const Home = () => {
                         className="badge"
                         style={{ position: "absolute", top: 10, left: 9 }}
                       >
-                        {item?.audioUrl ? (
-                          <span>Sách nói</span>
-                        ) : (
-                          <span>Giảm giá</span>
-                        )}
+                        {<span>Giảm giá</span>}
                         <img src={triangleTopRight} alt="Triangle" />
                       </Paragraph>
                     )
@@ -512,11 +457,7 @@ const Home = () => {
                         className="badge"
                         style={{ position: "absolute", top: 10, left: 9 }}
                       >
-                        {item?.audioUrl ? (
-                          <span>Sách nói</span>
-                        ) : (
-                          <span>Giảm giá</span>
-                        )}
+                        {<span>Giảm giá</span>}
                         <img src={triangleTopRight} alt="Triangle" />
                       </Paragraph>
                     )

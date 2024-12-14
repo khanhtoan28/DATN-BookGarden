@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from "react";
-import styles from "./pay.css";
 import axiosClient from "../../../apis/axiosClient";
 import { useParams } from "react-router-dom";
-import eventApi from "../../../apis/eventApi";
-import userApi from "../../../apis/userApi";
 import productApi from "../../../apis/productApi";
 import { useHistory } from "react-router-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Col, Row, Tag, Spin, Card } from "antd";
-import { DateTime } from "../../../utils/dateTime";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import {
   Typography,
-  Button,
   Steps,
   Breadcrumb,
   Modal,
@@ -23,8 +17,6 @@ import {
   Radio,
 } from "antd";
 import { LeftSquareOutlined } from "@ant-design/icons";
-
-import Slider from "react-slick";
 import axios from "axios";
 
 const { Meta } = Card;
@@ -49,7 +41,7 @@ const Pay = () => {
   const [template_feedback, setTemplateFeedback] = useState();
   let { id } = useParams();
   const history = useHistory();
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal, setShowVNPayModal] = useState(false);
   const cart = JSON.parse(localStorage.getItem("cart") || "[]");
   const hideModal = () => {
     setVisible(false);
@@ -57,7 +49,64 @@ const Pay = () => {
   const [totalFee, setTotalFee] = useState(0);
 
   const accountCreate = async (values) => {
-    console.log(values, "values");
+    // Tính toán tổng tiền (bao gồm phí ship)
+    const totalAmount = Number(totalPrice) + Number(totalFee);
+
+    if (values.billing === "vnpay") {
+      try {
+        // Lưu thông tin đơn hàng vào localStorage
+        localStorage.setItem(
+          "vnpay_order_info",
+          JSON.stringify({
+            userId: userData._id,
+            address: values.address,
+            billing: values.billing,
+            description: values.description,
+            status: "pending",
+            products: productDetail,
+            orderTotal: totalAmount,
+          })
+        );
+
+        // Lưu thông tin địa chỉ và mô tả
+        localStorage.setItem("vnpay_description", values.description);
+        localStorage.setItem("vnpay_address", values.address);
+
+        // Dữ liệu thanh toán VNPAY
+        const vnpayData = {
+          amount: totalAmount,
+          orderDescription: values.description || "Thanh toán đơn hàng",
+          orderType: "billpayment",
+          language: "vn",
+          returnUrl: "http://localhost:3500/pay",
+        };
+
+        // Gọi API tạo URL thanh toán VNPAY
+        const response = await axiosClient.post(
+          "/vnpay/create-payment-url",
+          vnpayData
+        );
+
+        if (response.paymentUrl) {
+          // Chuyển hướng đến trang thanh toán VNPAY
+          window.location.href = response.paymentUrl;
+        } else {
+          notification["error"]({
+            message: `Thông báo`,
+            description: "Không thể tạo đường dẫn thanh toán VNPAY",
+          });
+        }
+      } catch (error) {
+        console.error("VNPAY Payment Error:", error);
+        notification["error"]({
+          message: `Thông báo`,
+          description: "Lỗi trong quá trình tạo thanh toán VNPAY",
+        });
+      }
+      return;
+    }
+
+    // Giữ nguyên logic cho PayPal
     if (values.billing === "paypal") {
       localStorage.setItem("description", values.description);
       localStorage.setItem("address", values.address);
@@ -80,6 +129,7 @@ const Pay = () => {
         });
       }
     } else {
+      // Giữ nguyên logic cho COD
       try {
         const formatData = {
           userId: userData._id,
@@ -127,27 +177,80 @@ const Pay = () => {
       }, 1000);
     }
   };
-
+  const exchangeRate = 25000; // Giả sử 1 USD = 25000 VND
   const handlePayment = async (values) => {
     try {
-      const productPayment = {
-        price: "800",
-        description: values.bookingDetails,
-        return_url: "http://localhost:3500" + location.pathname,
-        cancel_url: "http://localhost:3500" + location.pathname,
-      };
-      const response = await axiosClient.post("/payment/pay", productPayment);
-      if (response.approvalUrl) {
-        localStorage.setItem("session_paypal", response.accessToken);
-        return response.approvalUrl; // Trả về URL thanh toán
-      } else {
-        notification["error"]({
-          message: `Thông báo`,
-          description: "Thanh toán thất bại",
-        });
-        return null;
+      // Tính toán tổng tiền (bao gồm phí ship)
+      const totalAmount = Number(totalPrice) + Number(totalFee);
+
+      if (values.billing === "vnpay") {
+        // Lưu thông tin địa chỉ và mô tả vào localStorage
+        localStorage.setItem("vnpay_description", values.description);
+        localStorage.setItem("vnpay_address", values.address);
+
+        const vnpayData = {
+          amount: totalAmount, // Tổng số tiền thanh toán
+          orderDescription: values.description || "Thanh toán đơn hàng",
+          orderType: "billpayment",
+          language: "vn",
+          returnUrl: "http://localhost:3500/pay", // URL trả về sau khi thanh toán
+        };
+
+        try {
+          // Gọi API tạo URL thanh toán VNPAY
+          const response = await axiosClient.post(
+            "/vnpay/create-payment-url",
+            vnpayData
+          );
+
+          if (response.paymentUrl) {
+            // Chuyển hướng đến trang thanh toán VNPAY
+            window.location.href = response.paymentUrl;
+          } else {
+            notification["error"]({
+              message: `Thông báo`,
+              description: "Không thể tạo đường dẫn thanh toán VNPAY",
+            });
+          }
+        } catch (error) {
+          console.error("VNPAY Payment Error:", error);
+          notification["error"]({
+            message: `Thông báo`,
+            description: "Lỗi trong quá trình tạo thanh toán VNPAY",
+          });
+        }
+
+        return null; // Trả về null để ngăn các xử lý tiếp theo
+      }
+
+      // Giữ nguyên logic cho PayPal
+      if (values.billing === "paypal") {
+        const totalAmountInUSD = (totalAmount / exchangeRate).toFixed(2);
+        const productPayment = {
+          price: totalAmountInUSD.toString(),
+          description: values.description,
+          return_url: "http://localhost:3500" + location.pathname,
+          cancel_url: "http://localhost:3500" + location.pathname,
+        };
+
+        const response = await axiosClient.post("/payment/pay", productPayment);
+        if (response.approvalUrl) {
+          localStorage.setItem("session_paypal", response.accessToken);
+          return response.approvalUrl;
+        } else {
+          notification["error"]({
+            message: `Thông báo`,
+            description: "Thanh toán thất bại",
+          });
+          return null;
+        }
       }
     } catch (error) {
+      console.error("Payment Error:", error);
+      notification["error"]({
+        message: `Thông báo`,
+        description: "Có lỗi xảy ra trong quá trình thanh toán",
+      });
       throw error;
     }
   };
@@ -156,7 +259,6 @@ const Pay = () => {
     try {
       const queryParams = new URLSearchParams(window.location.search);
       const paymentId = queryParams.get("paymentId");
-      // const token = queryParams.get('token');
       const PayerID = queryParams.get("PayerID");
       const token = localStorage.getItem("session_paypal");
       const description = localStorage.getItem("description");
@@ -171,11 +273,12 @@ const Pay = () => {
         },
       });
 
-      console.log(response);
-
       if (response) {
         const local = localStorage.getItem("user");
         const currentUser = JSON.parse(local);
+
+        // Tính toán tổng số tiền (bao gồm phí ship)
+        const totalAmount = Number(totalPrice) + Number(totalFee);
 
         const formatData = {
           userId: currentUser._id,
@@ -184,34 +287,28 @@ const Pay = () => {
           description: description,
           status: "pending",
           products: productDetail,
-          orderTotal: Number(totalPrice) + Number(totalFee),
+          orderTotal: totalAmount, // Lưu tổng số tiền bao gồm phí ship
+          paymentId: paymentId, // Lưu paymentId
+          payerId: PayerID, // Lưu PayerID
         };
 
-        console.log(formatData);
-        await axiosClient.post("/order", formatData).then((response) => {
-          console.log(response);
-          if (response == undefined) {
-            notification["error"]({
-              message: `Thông báo`,
-              description: "Đặt hàng thất bại",
-            });
-          } else {
-            notification["success"]({
-              message: `Thông báo`,
-              description: "Đặt hàng thành công",
-            });
-            form.resetFields();
-            history.push("/final-pay");
-            localStorage.removeItem("cart");
-            localStorage.removeItem("cartLength");
-          }
-        });
-        notification["success"]({
-          message: `Thông báo`,
-          description: "Thanh toán thành công",
-        });
-
-        setShowModal(false);
+        // Gửi yêu cầu lưu đơn hàng vào CSDL
+        const orderResponse = await axiosClient.post("/order", formatData);
+        if (orderResponse) {
+          notification["success"]({
+            message: `Thông báo`,
+            description: "Đặt hàng thành công",
+          });
+          form.resetFields();
+          history.push("/final-pay");
+          localStorage.removeItem("cart");
+          localStorage.removeItem("cartLength");
+        } else {
+          notification["error"]({
+            message: `Thông báo`,
+            description: "Đặt hàng thất bại",
+          });
+        }
       } else {
         notification["error"]({
           message: `Thông báo`,
@@ -222,10 +319,130 @@ const Pay = () => {
       setShowModal(false);
     } catch (error) {
       console.error("Error executing payment:", error);
-      // Xử lý lỗi
+      notification["error"]({
+        message: `Thông báo`,
+        description: "Có lỗi xảy ra trong quá trình thanh toán.",
+      });
     }
   };
+  const handleModalConfirmVNPAY = async () => {
+    try {
+      // Lấy thông tin từ URL
+      const queryParams = new URLSearchParams(window.location.search);
 
+      // Các tham số VNPAY
+      const vnpResponseCode = queryParams.get("vnp_ResponseCode");
+      const vnpTransactionNo = queryParams.get("vnp_TransactionNo");
+      const vnpTxnRef = queryParams.get("vnp_TxnRef");
+      const vnpAmount = queryParams.get("vnp_Amount");
+      const vnpOrderInfo = queryParams.get("vnp_OrderInfo");
+
+      // Log thông tin để debug
+      console.log("VNPAY Params:", {
+        vnpResponseCode,
+        vnpTransactionNo,
+        vnpTxnRef,
+        vnpAmount,
+        vnpOrderInfo,
+      });
+
+      // Chuẩn bị dữ liệu xác thực
+      const verificationData = {
+        vnp_ResponseCode: vnpResponseCode,
+        vnp_TransactionNo: vnpTransactionNo,
+        vnp_TxnRef: vnpTxnRef,
+        vnp_Amount: vnpAmount,
+        vnp_OrderInfo: vnpOrderInfo,
+      };
+
+      // Gọi API xác thực thanh toán VNPAY
+      const response = await axiosClient.post(
+        "/vnpay/verify-payment",
+        verificationData
+      );
+
+      if (response && response.status === "success") {
+        // Lấy thông tin người dùng từ localStorage
+        const local = localStorage.getItem("user");
+        const currentUser = JSON.parse(local);
+
+        // Lấy thông tin đơn hàng từ localStorage
+        const orderInfoString = localStorage.getItem("vnpay_order_info");
+        const orderInfo = JSON.parse(orderInfoString);
+
+        // Tính toán tổng số tiền (bao gồm phí ship)
+        const totalAmount = Number(totalPrice) + Number(totalFee);
+
+        // Chuẩn bị dữ liệu đơn hàng
+        const formatData = {
+          userId: currentUser._id,
+          address: orderInfo.address || localStorage.getItem("vnpay_address"),
+          billing: "vnpay",
+          description:
+            orderInfo.description || localStorage.getItem("vnpay_description"),
+          status: "pending",
+          products: productDetail,
+          orderTotal: totalAmount, // Lưu tổng số tiền bao gồm phí ship
+          vnpayTransactionNo: vnpTransactionNo, // Lưu mã giao dịch VNPAY
+          vnpayResponseCode: vnpResponseCode, // Lưu mã phản hồi
+          vnpayTxnRef: vnpTxnRef, // Lưu mã tham chiếu
+        };
+
+        // Gửi yêu cầu lưu đơn hàng vào CSDL
+        const orderResponse = await axiosClient.post("/order", formatData);
+
+        if (orderResponse) {
+          notification["success"]({
+            message: `Thông báo`,
+            description: "Đặt hàng thành công",
+          });
+
+          // Reset form nếu cần
+          form.resetFields();
+
+          // Chuyển hướng
+          history.push("/final-pay");
+
+          // Xóa localStorage
+          [
+            "cart",
+            "cartLength",
+            "vnpay_order_info",
+            "vnpay_address",
+            "vnpay_description",
+          ].forEach((key) => localStorage.removeItem(key));
+        } else {
+          notification["error"]({
+            message: `Thông báo`,
+            description: "Đặt hàng thất bại",
+          });
+        }
+      } else {
+        // Xử lý khi xác thực không thành công
+        notification["error"]({
+          message: `Thông báo`,
+          description: response.message || "Thanh toán VNPAY không thành công",
+        });
+      }
+
+      // Đóng modal
+      setShowVNPayModal(false);
+    } catch (error) {
+      console.error("Error executing VNPAY payment:", error);
+
+      // Hiển thị thông báo lỗi chi tiết
+      notification["error"]({
+        message: `Thông báo`,
+        description:
+          error.response?.data?.message ||
+          error.message ||
+          "Có lỗi xảy ra trong quá trình thanh toán VNPAY",
+      });
+
+      // Đóng modal
+      setShowVNPayModal(false);
+    }
+  };
   const CancelPay = () => {
     form.resetFields();
     history.push("/cart");
@@ -237,21 +454,113 @@ const Pay = () => {
   useEffect(() => {
     (async () => {
       try {
+        // Kiểm tra PayPal
         if (paymentId) {
           setShowModal(true);
         }
 
+        // Kiểm tra VNPAY
+        const queryParams = new URLSearchParams(location.search);
+        const vnpResponseCode = queryParams.get("vnp_ResponseCode");
+        const vnpTransactionNo = queryParams.get("vnp_TransactionNo");
+
+        console.log("VNPAY Response Code:", vnpResponseCode);
+        console.log("VNPAY Transaction No:", vnpTransactionNo);
+
+        if (vnpResponseCode && vnpTransactionNo) {
+          // Xác nhận thanh toán VNPAY
+          try {
+            const verificationData = {
+              vnp_ResponseCode: vnpResponseCode,
+              vnp_TransactionNo: vnpTransactionNo,
+              // Thêm các tham số khác từ URL nếu cần
+              vnp_TxnRef: queryParams.get("vnp_TxnRef"),
+              vnp_Amount: queryParams.get("vnp_Amount"),
+              vnp_OrderInfo: queryParams.get("vnp_OrderInfo"),
+            };
+
+            console.log("Verification Data:", verificationData);
+
+            const response = await axiosClient.post(
+              "/vnpay/verify-payment",
+              verificationData
+            );
+
+            console.log("VNPAY Verification Response:", response);
+
+            // Kiểm tra điều kiện thành công của VNPAY
+            if (
+              response &&
+              response.status === "success" &&
+              vnpResponseCode === "00"
+            ) {
+              // Lấy thông tin đơn hàng từ localStorage
+              const orderInfoString = localStorage.getItem("vnpay_order_info");
+
+              if (orderInfoString) {
+                const orderInfo = JSON.parse(orderInfoString);
+
+                // Thêm thông tin transaction từ VNPAY
+                const formatData = {
+                  ...orderInfo,
+                  vnpayTransactionId: vnpTransactionNo,
+                  vnpayResponseCode: vnpResponseCode,
+                };
+
+                const orderResponse = await axiosClient.post(
+                  "/order",
+                  formatData
+                );
+
+                if (orderResponse) {
+                  notification["success"]({
+                    message: `Thông báo`,
+                    description: "Thanh toán VNPAY thành công",
+                  });
+
+                  history.push("/final-pay");
+                  localStorage.removeItem("cart");
+                  localStorage.removeItem("cartLength");
+                  localStorage.removeItem("vnpay_order_info");
+                  localStorage.removeItem("vnpay_address");
+                  localStorage.removeItem("vnpay_description");
+                } else {
+                  notification["error"]({
+                    message: `Thông báo`,
+                    description: "Đặt hàng thất bại",
+                  });
+                }
+              }
+            } else {
+              notification["error"]({
+                message: `Thông báo`,
+                description: `Thanh toán VNPAY không thành công. Mã lỗi: ${vnpResponseCode}`,
+              });
+            }
+          } catch (vnpError) {
+            console.error("VNPAY Verification Error:", vnpError);
+            notification["error"]({
+              message: `Thông báo`,
+              description: "Có lỗi trong quá trình xác minh thanh toán",
+            });
+          }
+        }
+
+        // Các logic ban đầu
         await productApi.getDetailProduct(id).then((item) => {
           setProductDetail(item);
         });
+
         const local = localStorage.getItem("user");
         const user = JSON.parse(local);
         console.log(user);
+
         form.setFieldsValue({
           name: user.username,
           email: user.email,
           phone: user.phone,
         });
+
         const cart = JSON.parse(localStorage.getItem("cart")) || [];
         console.log(cart);
 
@@ -263,6 +572,7 @@ const Pay = () => {
             price,
           })
         );
+
         let totalPrice = 0;
 
         for (let i = 0; i < transformedData.length; i++) {
@@ -279,8 +589,10 @@ const Pay = () => {
         setLoading(false);
       } catch (error) {
         console.log("Failed to fetch event detail:" + error);
+        setLoading(false);
       }
     })();
+
     window.scrollTo(0, 0);
   }, []);
   const [tinh, setTinh] = useState([]); // Danh sách tỉnh
@@ -474,119 +786,124 @@ const Pay = () => {
 
                   <Form.Item
                     name="address5"
-                    label=" Tỉnh/Thành"
+                    label="Tỉnh/Thành"
                     hasFeedback
+                    rules={[
+                      { required: true, message: "Vui lòng chọn tỉnh/thành!" },
+                    ]}
                     style={{ marginBottom: 15 }}
                   >
-                    {/* <Input placeholder="Địa chỉ" /> */}
-                    <div className="mb-4">
-                      <Select
-                        placeholder="Chọn Tỉnh/Thành"
-                        className="w-full"
-                        allowClear
-                        onChange={(e) => fetchHuyen(e)}
-                      >
-                        {tinh.map((item) => {
-                          return (
-                            <Option
-                              style={{ color: "black" }}
-                              className="text-black"
-                              key={item.ProvinceID}
-                              value={item.ProvinceID}
-                            >
-                              <p style={{ color: "black" }}>
-                                {item.ProvinceName}
-                              </p>
-                            </Option>
-                          );
-                        })}
-                      </Select>
-                    </div>
+                    <Select
+                      placeholder="Chọn Tỉnh/Thành"
+                      className="w-full"
+                      allowClear
+                      onChange={(e) => fetchHuyen(e)}
+                    >
+                      {tinh.map((item) => (
+                        <Option key={item.ProvinceID} value={item.ProvinceID}>
+                          {item.ProvinceName}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
+
                   <Form.Item
                     name="address2"
                     label="Quận/Huyện"
                     hasFeedback
+                    rules={[
+                      { required: true, message: "Vui lòng chọn quận/huyện!" },
+                      () => ({
+                        validator(_, value) {
+                          if (!value && huyen.length === 0) {
+                            return Promise.reject(
+                              new Error("Vui lòng chọn tỉnh/thành trước!")
+                            );
+                          }
+                          return Promise.resolve();
+                        },
+                      }),
+                    ]}
                     style={{ marginBottom: 15 }}
                   >
-                    <div className="mb-4">
-                      <Select
-                        placeholder="Chọn Quận/Huyện"
-                        className="w-full"
-                        allowClear
-                        onChange={(e) => fetchXa(e)}
-                        disabled={!huyen.length}
-                      >
-                        {huyen.map((item) => (
-                          <Option key={item.DistrictID} value={item.DistrictID}>
-                            {item.DistrictName}
-                          </Option>
-                        ))}
-                      </Select>
-                    </div>
+                    <Select
+                      placeholder="Chọn Quận/Huyện"
+                      className="w-full"
+                      allowClear
+                      onChange={(e) => fetchXa(e)}
+                      disabled={!huyen.length}
+                    >
+                      {huyen.map((item) => (
+                        <Option key={item.DistrictID} value={item.DistrictID}>
+                          {item.DistrictName}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
+
                   <Form.Item
                     name="address3"
                     label="Xã/Phường"
                     hasFeedback
+                    rules={[
+                      { required: true, message: "Vui lòng chọn xã/phường!" },
+                      () => ({
+                        validator(_, value) {
+                          if (!value && xa.length === 0) {
+                            return Promise.reject(
+                              new Error("Vui lòng chọn quận/huyện trước!")
+                            );
+                          }
+                          return Promise.resolve();
+                        },
+                      }),
+                    ]}
                     style={{ marginBottom: 15 }}
                   >
-                    <div className="mb-4">
-                      <Select
-                        placeholder="Chọn Xã/Phường"
-                        className="w-full"
-                        allowClear
-                        onChange={(e) => {
-                          onGetPrice(e);
-                        }}
-                        disabled={!xa.length}
-                      >
-                        {xa.map((item) => (
-                          <Option key={item.WardCode} value={item.WardCode}>
-                            {item.WardName}
-                          </Option>
-                        ))}
-                      </Select>
-                    </div>
+                    <Select
+                      placeholder="Chọn Xã/Phường"
+                      className="w-full"
+                      allowClear
+                      onChange={(e) => onGetPrice(e)}
+                      disabled={!xa.length}
+                    >
+                      {xa.map((item) => (
+                        <Option key={item.WardCode} value={item.WardCode}>
+                          {item.WardName}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
 
                   <p>Phí ship</p>
                   <p className="font-bold text-black text-xl">
-                    {" "}
                     {totalFee?.toLocaleString()} VND
                   </p>
                   <p>Tổng tiền ( bao gồm phí ship)</p>
                   <p className="font-bold text-black text-xl">
-                    {" "}
-                    {(
-                      Number(totalPrice) + Number(totalFee)
-                    )?.toLocaleString()}{" "}
+                    {(Number(totalPrice) + Number(totalFee))?.toLocaleString()}{" "}
                     VND
                   </p>
-                  {/* <Form.Item
-                    name="total"
-                    label="Tổng tiền ( bao gồm phí ship)"
-                    hasFeedback
-                    style={{ marginBottom: 10 }}
-                  >
-                    <Input
-                      disabled
-                      defaultValue={
-                        totalFee != 0
-                          ? Number(totalPrice) + Number(totalFee)
-                          : 0
-                      }
-                      placeholder="Số điện thoại"
-                    />
-                  </Form.Item> */}
+
                   <Form.Item
                     name="address"
-                    label=" Nhập chi tiết số nhà , ngách ngõ "
+                    label="Nhập chi tiết số nhà, ngách ngõ"
                     hasFeedback
                     style={{ marginBottom: 15 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng nhập chi tiết địa chỉ!",
+                      },
+                      {
+                        min: 5,
+                        message: "Địa chỉ phải có ít nhất 5 ký tự!",
+                      },
+                    ]}
                   >
                     <Input placeholder="Chi tiết Địa chỉ" />
                   </Form.Item>
+
                   <Form.Item
                     name="description"
                     label="Lưu ý cho đơn hàng"
@@ -611,34 +928,24 @@ const Pay = () => {
                     <Radio.Group>
                       <Radio value={"cod"}>COD</Radio>
                       <Radio value={"paypal"}>PAYPAL</Radio>
+                      <Radio value={"vnpay"}>VNPAY</Radio>
                     </Radio.Group>
                   </Form.Item>
-
-                  <Form.Item>
-                    <Button
-                      style={{
-                        background: "#FF8000",
-                        color: "#FFFFFF",
-                        float: "right",
-                        marginTop: 20,
-                        marginLeft: 8,
-                      }}
-                      htmlType="submit"
-                    >
-                      Hoàn thành
-                    </Button>
-                    <Button
-                      style={{
-                        background: "#FF8000",
-                        color: "#FFFFFF",
-                        float: "right",
-                        marginTop: 20,
-                      }}
+                  <div className="flex justify-end space-x-2 mt-4">
+                    <button
+                      className="border border-gray-300 text-gray-900 py-2 px-4 rounded hover:bg-gray-100"
                       onClick={CancelPay}
                     >
                       Trở về
-                    </Button>
-                  </Form.Item>
+                    </button>
+
+                    <button
+                      className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5"
+                      htmlType="submit"
+                    >
+                      Hoàn thành
+                    </button>
+                  </div>
                 </Form>
               </div>
             </div>
@@ -647,6 +954,13 @@ const Pay = () => {
         <Modal
           visible={showModal}
           onOk={handleModalConfirm}
+          onCancel={() => setShowModal(false)}
+        >
+          <p>Bạn có chắc chắn muốn xác nhận thanh toán ?</p>
+        </Modal>
+        <Modal
+          visible={showModal}
+          onOk={handleModalConfirmVNPAY}
           onCancel={() => setShowModal(false)}
         >
           <p>Bạn có chắc chắn muốn xác nhận thanh toán ?</p>
