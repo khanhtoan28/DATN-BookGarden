@@ -41,7 +41,7 @@ const Pay = () => {
   const [template_feedback, setTemplateFeedback] = useState();
   let { id } = useParams();
   const history = useHistory();
-  const [showModal, setShowModal, setShowVNPayModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const cart = JSON.parse(localStorage.getItem("cart") || "[]");
   const hideModal = () => {
     setVisible(false);
@@ -325,124 +325,7 @@ const Pay = () => {
       });
     }
   };
-  const handleModalConfirmVNPAY = async () => {
-    try {
-      // Lấy thông tin từ URL
-      const queryParams = new URLSearchParams(window.location.search);
 
-      // Các tham số VNPAY
-      const vnpResponseCode = queryParams.get("vnp_ResponseCode");
-      const vnpTransactionNo = queryParams.get("vnp_TransactionNo");
-      const vnpTxnRef = queryParams.get("vnp_TxnRef");
-      const vnpAmount = queryParams.get("vnp_Amount");
-      const vnpOrderInfo = queryParams.get("vnp_OrderInfo");
-
-      // Log thông tin để debug
-      console.log("VNPAY Params:", {
-        vnpResponseCode,
-        vnpTransactionNo,
-        vnpTxnRef,
-        vnpAmount,
-        vnpOrderInfo,
-      });
-
-      // Chuẩn bị dữ liệu xác thực
-      const verificationData = {
-        vnp_ResponseCode: vnpResponseCode,
-        vnp_TransactionNo: vnpTransactionNo,
-        vnp_TxnRef: vnpTxnRef,
-        vnp_Amount: vnpAmount,
-        vnp_OrderInfo: vnpOrderInfo,
-      };
-
-      // Gọi API xác thực thanh toán VNPAY
-      const response = await axiosClient.post(
-        "/vnpay/verify-payment",
-        verificationData
-      );
-
-      if (response && response.status === "success") {
-        // Lấy thông tin người dùng từ localStorage
-        const local = localStorage.getItem("user");
-        const currentUser = JSON.parse(local);
-
-        // Lấy thông tin đơn hàng từ localStorage
-        const orderInfoString = localStorage.getItem("vnpay_order_info");
-        const orderInfo = JSON.parse(orderInfoString);
-
-        // Tính toán tổng số tiền (bao gồm phí ship)
-        const totalAmount = Number(totalPrice) + Number(totalFee);
-
-        // Chuẩn bị dữ liệu đơn hàng
-        const formatData = {
-          userId: currentUser._id,
-          address: orderInfo.address || localStorage.getItem("vnpay_address"),
-          billing: "vnpay",
-          description:
-            orderInfo.description || localStorage.getItem("vnpay_description"),
-          status: "pending",
-          products: productDetail,
-          orderTotal: totalAmount, // Lưu tổng số tiền bao gồm phí ship
-          vnpayTransactionNo: vnpTransactionNo, // Lưu mã giao dịch VNPAY
-          vnpayResponseCode: vnpResponseCode, // Lưu mã phản hồi
-          vnpayTxnRef: vnpTxnRef, // Lưu mã tham chiếu
-        };
-
-        // Gửi yêu cầu lưu đơn hàng vào CSDL
-        const orderResponse = await axiosClient.post("/order", formatData);
-
-        if (orderResponse) {
-          notification["success"]({
-            message: `Thông báo`,
-            description: "Đặt hàng thành công",
-          });
-
-          // Reset form nếu cần
-          form.resetFields();
-
-          // Chuyển hướng
-          history.push("/final-pay");
-
-          // Xóa localStorage
-          [
-            "cart",
-            "cartLength",
-            "vnpay_order_info",
-            "vnpay_address",
-            "vnpay_description",
-          ].forEach((key) => localStorage.removeItem(key));
-        } else {
-          notification["error"]({
-            message: `Thông báo`,
-            description: "Đặt hàng thất bại",
-          });
-        }
-      } else {
-        // Xử lý khi xác thực không thành công
-        notification["error"]({
-          message: `Thông báo`,
-          description: response.message || "Thanh toán VNPAY không thành công",
-        });
-      }
-
-      // Đóng modal
-      setShowVNPayModal(false);
-    } catch (error) {
-      console.error("Error executing VNPAY payment:", error);
-
-      // Hiển thị thông báo lỗi chi tiết
-      notification["error"]({
-        message: `Thông báo`,
-        description:
-          error.response?.data?.message ||
-          error.message ||
-          "Có lỗi xảy ra trong quá trình thanh toán VNPAY",
-      });
-
-      // Đóng modal
-      setShowVNPayModal(false);
-    }
-  };
   const CancelPay = () => {
     form.resetFields();
     history.push("/cart");
@@ -457,93 +340,6 @@ const Pay = () => {
         // Kiểm tra PayPal
         if (paymentId) {
           setShowModal(true);
-        }
-
-        // Kiểm tra VNPAY
-        const queryParams = new URLSearchParams(location.search);
-        const vnpResponseCode = queryParams.get("vnp_ResponseCode");
-        const vnpTransactionNo = queryParams.get("vnp_TransactionNo");
-
-        console.log("VNPAY Response Code:", vnpResponseCode);
-        console.log("VNPAY Transaction No:", vnpTransactionNo);
-
-        if (vnpResponseCode && vnpTransactionNo) {
-          // Xác nhận thanh toán VNPAY
-          try {
-            const verificationData = {
-              vnp_ResponseCode: vnpResponseCode,
-              vnp_TransactionNo: vnpTransactionNo,
-              // Thêm các tham số khác từ URL nếu cần
-              vnp_TxnRef: queryParams.get("vnp_TxnRef"),
-              vnp_Amount: queryParams.get("vnp_Amount"),
-              vnp_OrderInfo: queryParams.get("vnp_OrderInfo"),
-            };
-
-            console.log("Verification Data:", verificationData);
-
-            const response = await axiosClient.post(
-              "/vnpay/verify-payment",
-              verificationData
-            );
-
-            console.log("VNPAY Verification Response:", response);
-
-            // Kiểm tra điều kiện thành công của VNPAY
-            if (
-              response &&
-              response.status === "success" &&
-              vnpResponseCode === "00"
-            ) {
-              // Lấy thông tin đơn hàng từ localStorage
-              const orderInfoString = localStorage.getItem("vnpay_order_info");
-
-              if (orderInfoString) {
-                const orderInfo = JSON.parse(orderInfoString);
-
-                // Thêm thông tin transaction từ VNPAY
-                const formatData = {
-                  ...orderInfo,
-                  vnpayTransactionId: vnpTransactionNo,
-                  vnpayResponseCode: vnpResponseCode,
-                };
-
-                const orderResponse = await axiosClient.post(
-                  "/order",
-                  formatData
-                );
-
-                if (orderResponse) {
-                  notification["success"]({
-                    message: `Thông báo`,
-                    description: "Thanh toán VNPAY thành công",
-                  });
-
-                  history.push("/final-pay");
-                  localStorage.removeItem("cart");
-                  localStorage.removeItem("cartLength");
-                  localStorage.removeItem("vnpay_order_info");
-                  localStorage.removeItem("vnpay_address");
-                  localStorage.removeItem("vnpay_description");
-                } else {
-                  notification["error"]({
-                    message: `Thông báo`,
-                    description: "Đặt hàng thất bại",
-                  });
-                }
-              }
-            } else {
-              notification["error"]({
-                message: `Thông báo`,
-                description: `Thanh toán VNPAY không thành công. Mã lỗi: ${vnpResponseCode}`,
-              });
-            }
-          } catch (vnpError) {
-            console.error("VNPAY Verification Error:", vnpError);
-            notification["error"]({
-              message: `Thông báo`,
-              description: "Có lỗi trong quá trình xác minh thanh toán",
-            });
-          }
         }
 
         // Các logic ban đầu
@@ -954,13 +750,6 @@ const Pay = () => {
         <Modal
           visible={showModal}
           onOk={handleModalConfirm}
-          onCancel={() => setShowModal(false)}
-        >
-          <p>Bạn có chắc chắn muốn xác nhận thanh toán ?</p>
-        </Modal>
-        <Modal
-          visible={showModal}
-          onOk={handleModalConfirmVNPAY}
           onCancel={() => setShowModal(false)}
         >
           <p>Bạn có chắc chắn muốn xác nhận thanh toán ?</p>
