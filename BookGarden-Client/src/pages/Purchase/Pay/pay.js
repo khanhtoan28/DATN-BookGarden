@@ -287,7 +287,7 @@ const Pay = () => {
           description: description,
           status: "pending",
           products: productDetail,
-          orderTotal: totalAmount, // Lưu tổng số tiền bao gồm phí ship
+          orderTotal: Number(totalPrice) + Number(totalFee), // Lưu tổng số tiền bao gồm phí ship
           paymentId: paymentId, // Lưu paymentId
           payerId: PayerID, // Lưu PayerID
         };
