@@ -94,7 +94,38 @@ const CartHistory = () => {
       throw error;
     }
   };
+  const handleAutoCompleteOrder = async (orderId) => {
+    try {
+      const updatedOrder = {
+        status: "final", // Chuyển trạng thái sang 'final'
+      };
 
+      await axiosClient.put(`/order/${orderId}`, updatedOrder);
+
+      notification["success"]({
+        message: "Thông báo",
+        description: "Đơn hàng đã tự động chuyển sang hoàn thành!",
+      });
+
+      handleList(); // Cập nhật danh sách đơn hàng
+    } catch (error) {
+      notification["error"]({
+        message: "Lỗi",
+        description: "Không thể cập nhật trạng thái đơn hàng.",
+      });
+    }
+  };
+  useEffect(() => {
+    if (orderList.data) {
+      orderList.data.forEach((order) => {
+        if (order.status === "shipped successfully") {
+          setTimeout(() => {
+            handleAutoCompleteOrder(order._id);
+          }, 15000); // 15 giây
+        }
+      });
+    }
+  }, [orderList]);
   const columns = [
     {
       title: <div className="text-center">Thông tin sản phẩm</div>,

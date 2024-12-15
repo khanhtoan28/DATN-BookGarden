@@ -120,6 +120,7 @@ const Complaint = () => {
           description: values.description,
           slug: values.slug,
         };
+
         await axiosClient
           .put("/category/" + id, categoryList)
           .then((response) => {

@@ -20,7 +20,12 @@ import {
   ContactsTwoTone,
   HddTwoTone,
   ShoppingTwoTone,
+  ExclamationCircleTwoTone,
+  EditTwoTone,
+  CloudTwoTone,
+  IdcardTwoTone,
 } from "@ant-design/icons";
+import { Link } from "react-router-dom";
 import statisticApi from "../../apis/statistic";
 import orderApi from "../../apis/orderApi";
 import {
@@ -34,7 +39,7 @@ import {
 
 const DashBoard = () => {
   const [orders, setOrder] = useState([]);
-  const [statisticList, setStatisticList] = useState({}); // Khởi tạo là object
+  const [statisticList, setStatisticList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
@@ -44,11 +49,11 @@ const DashBoard = () => {
       try {
         // Gọi thống kê tổng
         const statisticRes = await statisticApi.getTotal();
-        console.log("Statistic API response:", statisticRes); // Kiểm tra dữ liệu trả về
-        setStatisticList(statisticRes.data || {}); // Gán dữ liệu trả về, hoặc {} nếu undefined
+        setStatisticList(statisticRes.data);
+        setData(statisticRes.data.data);
 
         // Gọi đơn hàng mới nhất
-        const orderRes = await orderApi.getListOrder({ page: 1, limit: 15 });
+        const orderRes = await orderApi.getListOrder({ page: 1, limit: 1000 });
         const sortedOrders = orderRes.data.docs.sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
@@ -132,10 +137,10 @@ const DashBoard = () => {
                 <div className="card_number">
                   <div>
                     <div className="number_total">
-                      {statisticList?.totalIncome?.toLocaleString("vi", {
+                      {statisticList.totalIncome?.toLocaleString("vi", {
                         style: "currency",
                         currency: "VND",
-                      }) || "0 VND"}
+                      })}
                     </div>
                     <div className="title_total">Tổng doanh thu</div>
                   </div>
@@ -146,58 +151,134 @@ const DashBoard = () => {
               </Card>
             </Col>
             <Col span={6}>
-              <Card className="card_total" bordered={false}>
-                <div className="card_number">
-                  <div>
-                    <div className="number_total">
-                      {statisticList?.productTotal || 0}
+              <Link to="/account-management">
+                <Card className="card_total" bordered={false}>
+                  <div className="card_number">
+                    <div>
+                      <div className="number_total">
+                        {statisticList.userTotal || 0}
+                      </div>
+                      <div className="title_total">Số người dùng</div>
                     </div>
-                    <div className="title_total">Số sản phẩm</div>
+                    <div>
+                      <IdcardTwoTone style={{ fontSize: 48 }} />
+                    </div>
                   </div>
-                  <div>
-                    <ShopTwoTone style={{ fontSize: 48 }} />
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </Link>
             </Col>
             <Col span={6}>
-              <Card className="card_total" bordered={false}>
-                <div className="card_number">
-                  <div>
-                    <div className="number_total">
-                      {statisticList?.categoryTotal || 0}
+              <Link to="/product-list">
+                <Card className="card_total" bordered={false}>
+                  <div className="card_number">
+                    <div>
+                      <div className="number_total">
+                        {statisticList.productTotal || 0}
+                      </div>
+                      <div className="title_total">Số sản phẩm</div>
                     </div>
-                    <div className="title_total">Số danh mục</div>
+                    <div>
+                      <ShopTwoTone style={{ fontSize: 48 }} />
+                    </div>
                   </div>
-                  <div>
-                    <HddTwoTone style={{ fontSize: 48 }} />
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </Link>
             </Col>
             <Col span={6}>
-              <Card className="card_total" bordered={false}>
-                <div className="card_number">
-                  <div>
-                    <div className="number_total">
-                      {statisticList?.orderTotal || 0}
+              <Link to="/category-list">
+                <Card className="card_total" bordered={false}>
+                  <div className="card_number">
+                    <div>
+                      <div className="number_total">
+                        {statisticList.categoryTotal || 0}
+                      </div>
+                      <div className="title_total">Số danh mục</div>
                     </div>
-                    <div className="title_total">Số đơn hàng</div>
+                    <div>
+                      <HddTwoTone style={{ fontSize: 48 }} />
+                    </div>
                   </div>
-                  <div>
-                    <ShoppingTwoTone style={{ fontSize: 48 }} />
+                </Card>
+              </Link>
+            </Col>
+
+            <Col span={6} style={{ marginTop: 10 }}>
+              <Link to="/author-list">
+                <Card className="card_total" bordered={false}>
+                  <div className="card_number">
+                    <div>
+                      <div className="number_total">
+                        {statisticList.authorTotal || 0}
+                      </div>
+                      <div className="title_total">Số tác giả</div>
+                    </div>
+                    <div>
+                      <EditTwoTone style={{ fontSize: 48 }} />
+                    </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </Link>
+            </Col>
+            <Col span={6} style={{ marginTop: 10 }}>
+              <Link to="/pulisher-list">
+                <Card className="card_total" bordered={false}>
+                  <div className="card_number">
+                    <div>
+                      <div className="number_total">
+                        {statisticList.pulisherTotal || 0}
+                      </div>
+                      <div className="title_total">Số nhà xuất bản</div>
+                    </div>
+                    <div>
+                      <CloudTwoTone style={{ fontSize: 48 }} />
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            </Col>
+            <Col span={6} style={{ marginTop: 10 }}>
+              <Link to="/order-list">
+                <Card className="card_total" bordered={false}>
+                  <div className="card_number">
+                    <div>
+                      <div className="number_total">
+                        {statisticList.orderTotal}
+                      </div>
+                      <div className="title_total">Số đơn hàng</div>
+                    </div>
+                    <div>
+                      <ShoppingTwoTone style={{ fontSize: 48 }} />
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            </Col>
+            <Col span={6} style={{ marginTop: 10 }}>
+              <Link to="/complaint-list">
+                <Card className="card_total" bordered={false}>
+                  <div className="card_number">
+                    <div>
+                      <div className="number_total">
+                        {statisticList.complaintTotal}
+                      </div>
+                      <div className="title_total">Số đơn khiếu nại</div>
+                    </div>
+                    <div>
+                      <ExclamationCircleTwoTone style={{ fontSize: 48 }} />
+                    </div>
+                  </div>
+                </Card>
+              </Link>
             </Col>
           </Row>
+
           <Col span={20}>
             <div className="chart">
               <div className="chart">
                 <div className="title">Thống kê đơn hàng trong 12 tháng</div>
                 <ResponsiveContainer width="100%" aspect={2 / 1}>
                   <AreaChart
-                    data={data || []}
+                    data={data}
                     margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
                   >
                     {/* Gradient màu */}
