@@ -121,7 +121,7 @@ const CartHistory = () => {
         if (order.status === "shipped successfully") {
           setTimeout(() => {
             handleAutoCompleteOrder(order._id);
-          }, 15000); // 15 giây
+          }, 60000); // 60 giây
         }
       });
     }
