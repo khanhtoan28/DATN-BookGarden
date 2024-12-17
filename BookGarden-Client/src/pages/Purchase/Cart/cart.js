@@ -60,9 +60,9 @@ const Cart = () => {
         }
 
         // Kiểm tra giới hạn tối đa
-        if (newStock > 5) {
+        if (newStock > 100) {
           message.error(
-            "Bạn chỉ được phép mua tối đa 5 sản phẩm cho mỗi mặt hàng."
+            "Bạn chỉ được phép mua tối đa 100 sản phẩm cho mỗi mặt hàng."
           );
           return;
         }
