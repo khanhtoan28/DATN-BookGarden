@@ -278,7 +278,7 @@ const Pay = () => {
         const currentUser = JSON.parse(local);
 
         // Tính toán tổng số tiền (bao gồm phí ship)
-        const totalAmount = Number(totalPrice) + Number(totalFee);
+        const totalAmount = Number(totalPrice) + Number(totalFee); // Đảm bảo tổng tiền bao gồm phí ship
 
         const formatData = {
           userId: currentUser._id,
@@ -287,11 +287,11 @@ const Pay = () => {
           description: description,
           status: "pending",
           products: productDetail,
-          orderTotal: Number(totalPrice) + Number(totalFee), // Lưu tổng số tiền bao gồm phí ship
+          orderTotal: totalAmount, // Lưu tổng số tiền bao gồm phí ship
           paymentId: paymentId, // Lưu paymentId
           payerId: PayerID, // Lưu PayerID
         };
-
+        console.log("formatData trước khi gửi:", formatData);
         // Gửi yêu cầu lưu đơn hàng vào CSDL
         const orderResponse = await axiosClient.post("/order", formatData);
         if (orderResponse) {
@@ -781,23 +781,6 @@ const Pay = () => {
                       </label>
 
                       {/* VNPAY */}
-                      <label
-                        className={`flex items-center px-4 py-2 border rounded-lg cursor-pointer ${
-                          selected === "vnpay"
-                            ? "font-bold border-blue-500 bg-blue-50"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        <i className="fa-solid fa-credit-card text-blue-500"></i>
-                        <input
-                          type="radio"
-                          name="payment"
-                          value="vnpay"
-                          className="hidden"
-                          onChange={() => setSelected("vnpay")}
-                        />
-                        <span className="ml-2 text-gray-700">VNPAY</span>
-                      </label>
                     </div>
                   </Form.Item>
                   <div className="flex justify-end space-x-2 mt-4">

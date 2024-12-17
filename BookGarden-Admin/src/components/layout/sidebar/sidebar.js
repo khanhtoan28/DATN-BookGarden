@@ -50,7 +50,7 @@ function Sidebar() {
     },
 
     {
-      key: "kl-list",
+      key: "complaint-list",
       title: "Quản lý khiếu nại",
       link: "/complaint-list",
       icon: <ExclamationCircleOutlined />,
