@@ -95,7 +95,26 @@ const OrderDetail = () => {
                     <td>{order.orderTotal}</td>
                     <td>{order.address}</td>
                     <td>{order.billing}</td>
-                    <td>{order.status}</td>
+                    <td>
+                      {(() => {
+                        switch (order.status) {
+                          case "pending":
+                            return "Đợi xác nhận";
+                          case "confirmed":
+                            return "Đã xác nhận";
+                          case "shipping":
+                            return "Đang vận chuyển";
+                          case "shipped successfully":
+                            return "Đã giao thành công";
+                          case "final":
+                            return "Hoàn thành";
+                          case "rejected":
+                            return "Đã hủy";
+                          default:
+                            return order.status;
+                        }
+                      })()}
+                    </td>
                     <td>{order.description}</td>
                     <td>
                       {moment(order.createdAt).format("DD/MM/YYYY HH:mm")}

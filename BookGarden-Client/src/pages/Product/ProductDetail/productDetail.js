@@ -1,7 +1,6 @@
 import {
   Breadcrumb,
   Card,
-  Carousel,
   Col,
   Form,
   Input,
@@ -21,8 +20,6 @@ import { numberWithCommas } from "../../../utils/common";
 import "react-h5-audio-player/lib/styles.css";
 import "./productDetail.css";
 
-const { TextArea } = Input;
-
 const ProductDetail = () => {
   const [productDetail, setProductDetail] = useState([]);
   const [recommend, setRecommend] = useState([]);
@@ -34,7 +31,8 @@ const ProductDetail = () => {
   const [visible2, setVisible2] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState("");
   const addCart = (product) => {
     if (product.stock === 0) {
       message.warning("Sản phẩm đã hết hàng");
@@ -206,7 +204,10 @@ const ProductDetail = () => {
     handleList();
     window.scrollTo(0, 0);
   }, [cartLength]);
-
+  const handleImageClick = (image) => {
+    setCurrentImage(image);
+    setIsOpen(true); // Mở modal khi ảnh được nhấp vào
+  };
   return (
     <div>
       <Spin spinning={false}>
@@ -230,28 +231,67 @@ const ProductDetail = () => {
             <hr></hr>
             <Row gutter={12} style={{ marginTop: 20 }}>
               <Col span={8}>
-                {productDetail?.slide?.length > 0 ? (
-                  <Carousel autoplay className="carousel-image">
-                    {productDetail.slide.map((item) => (
-                      <div className="img" key={item}>
-                        <img
+                <Card className="card_image" bordered={false}>
+                  <img src={productDetail.image} />
+                  {productDetail?.slide?.length > 0 && (
+                    <div
+                      className="slide-images"
+                      style={{
+                        marginTop: 20,
+                        marginRight: 120,
+                        display: "flex",
+                      }}
+                    >
+                      {productDetail.slide.map((item) => (
+                        <div
+                          className="img"
+                          key={item}
                           style={{
-                            width: "50%",
-                            height: "50%",
-                            marginLeft: "100px",
+                            margin: "5px",
                           }}
-                          src={item}
-                          alt=""
-                        />
-                      </div>
-                    ))}
-                  </Carousel>
-                ) : (
-                  <Card className="card_image" bordered={false}>
-                    <img src={productDetail.image} />
-                    <div className="saleprice"></div>
-                  </Card>
-                )}
+                        >
+                          <img
+                            style={{
+                              width: "100px", // Bạn có thể điều chỉnh chiều rộng theo nhu cầu
+                              height: "auto", // Giữ tỷ lệ khung hình
+                            }}
+                            src={item}
+                            alt="Slide"
+                            onClick={() => handleImageClick(item)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {currentImage && (
+                    <div
+                      style={{
+                        position: "fixed", // Đảm bảo ảnh phóng to phủ lên trên màn hình
+                        top: "0",
+                        left: "0",
+                        width: "100vw", // Chiếm toàn bộ chiều rộng màn hình
+                        height: "100vh", // Chiếm toàn bộ chiều cao màn hình
+                        backgroundColor: "rgba(0, 0, 0, 0.8)", // Nền mờ
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center", // Căn giữa ảnh
+                        zIndex: 9999, // Đảm bảo ảnh nằm trên các phần tử khác
+                        cursor: "pointer", // Thêm con trỏ để người dùng biết có thể đóng ảnh
+                      }}
+                      onClick={() => setCurrentImage("")} // Đóng ảnh khi click vào ảnh
+                    >
+                      <img
+                        src={currentImage}
+                        alt="Enlarged view"
+                        style={{
+                          maxWidth: "90%", // Giới hạn chiều rộng ảnh (90% của màn hình)
+                          maxHeight: "90%", // Giới hạn chiều cao ảnh (90% của màn hình)
+                          objectFit: "contain", // Giữ tỷ lệ ảnh mà không bị méo
+                        }}
+                      />
+                    </div>
+                  )}
+                </Card>
               </Col>
               <Col className="card_detail">
                 <div className="price">
@@ -370,8 +410,8 @@ const ProductDetail = () => {
                         marginBottom: 5,
                       }}
                     >
-                      Trọng lượng:
-                      <span style={{ fontWeight: "normal", marginLeft: 5 }}>
+                      Trọng lượng (gr):
+                      <span style={{ fontWeight: "normal ", marginLeft: 5 }}>
                         {productDetail.weight}
                       </span>
                     </span>
@@ -461,54 +501,58 @@ const ProductDetail = () => {
               gutter={{ xs: 8, sm: 16, md: 24, lg: 48 }}
               className="row-product"
             >
-              {recommend?.map((item) => (
-                <Col
-                  xl={{ span: 6 }}
-                  lg={{ span: 6 }}
-                  md={{ span: 12 }}
-                  sm={{ span: 12 }}
-                  xs={{ span: 24 }}
-                  className="col-product"
-                  onClick={() => handleReadMore(item._id)}
-                  key={item._id}
-                >
-                  <div className="show-product">
-                    {item.image ? (
-                      <img className="image-product" src={item.image} />
-                    ) : (
-                      <img
-                        className="image-product"
-                        src={require("../../../assets/image/NoImageAvailable.jpg")}
-                      />
-                    )}
-                    <div className="wrapper-products">
-                      <Paragraph
-                        className="title-product"
-                        ellipsis={{ rows: 2 }}
-                      >
-                        {item.name}
-                      </Paragraph>
-                      <div className="price-amount">
-                        <Paragraph className="price-product">
-                          {numberWithCommas(item.price - item.salePrice)} đ
+              {recommend?.slice(0, 4).map(
+                (
+                  item // Sử dụng slice để lấy 4 sản phẩm đầu tiên
+                ) => (
+                  <Col
+                    xl={{ span: 6 }}
+                    lg={{ span: 6 }}
+                    md={{ span: 12 }}
+                    sm={{ span: 12 }}
+                    xs={{ span: 24 }}
+                    className="col-product"
+                    onClick={() => handleReadMore(item._id)}
+                    key={item._id}
+                  >
+                    <div className="show-product">
+                      {item.image ? (
+                        <img className="image-product" src={item.image} />
+                      ) : (
+                        <img
+                          className="image-product"
+                          src={require("../../../assets/image/NoImageAvailable.jpg")}
+                        />
+                      )}
+                      <div className="wrapper-products">
+                        <Paragraph
+                          className="title-product"
+                          ellipsis={{ rows: 2 }}
+                        >
+                          {item.name}
                         </Paragraph>
-                        {item.salePrice !== 0 && (
-                          <Paragraph className="price-cross">
-                            {numberWithCommas(item.price)} đ
+                        <div className="price-amount">
+                          <Paragraph className="price-product">
+                            {numberWithCommas(item.price - item.salePrice)} đ
                           </Paragraph>
-                        )}
+                          {item.salePrice !== 0 && (
+                            <Paragraph className="price-cross">
+                              {numberWithCommas(item.price)} đ
+                            </Paragraph>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <Paragraph
-                    className="badge"
-                    style={{ position: "absolute", top: 10, left: 9 }}
-                  >
-                    <span>Giảm giá</span>
-                    <img src={triangleTopRight} />
-                  </Paragraph>
-                </Col>
-              ))}
+                    <Paragraph
+                      className="badge"
+                      style={{ position: "absolute", top: 10, left: 9 }}
+                    >
+                      <span>Giảm giá</span>
+                      <img src={triangleTopRight} />
+                    </Paragraph>
+                  </Col>
+                )
+              )}
             </Row>
           </div>
         </Card>
