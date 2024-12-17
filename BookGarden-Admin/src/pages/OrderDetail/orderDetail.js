@@ -70,6 +70,8 @@ const OrderDetail = () => {
       }
     })();
   }, []);
+  console.log(order);
+  console.log(order.products);
   return (
     <div>
       <Spin spinning={loading}>
@@ -112,13 +114,13 @@ const OrderDetail = () => {
                         {order?.products?.map((product, index) => (
                           <div key={index} className="product-item">
                             <img
-                              src={product.image}
-                              alt={product.name}
+                              src={product.product.image}
+                              alt={product.product.name}
                               className="product-image"
                             />
                             <div className="product-details">
                               <span className="product-name">
-                                {product.name}
+                                {product.product.name}
                               </span>
                               <span className="product-stock">
                                 Số lượng: {product.stock}

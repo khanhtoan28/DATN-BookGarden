@@ -732,7 +732,7 @@ const Pay = () => {
                         }`}
                       >
                         <img
-                          src="givemoney.png" // Đường dẫn đến ảnh
+                          src="givemoney.png"
                           alt="COD"
                           className="w-6 h-6"
                         />
