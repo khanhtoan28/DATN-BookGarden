@@ -1,60 +1,18 @@
 import React, { useState, useEffect } from "react";
 import "./orderDetail.css";
-import {
-  Typography,
-  Spin,
-  Empty,
-  Form,
-  Modal,
-  BackTop,
-  Breadcrumb,
-  Select,
-} from "antd";
-import {
-  DeleteOutlined,
-  HomeOutlined,
-  ShoppingCartOutlined,
-  EditOutlined,
-} from "@ant-design/icons";
+import { Spin, BackTop, Breadcrumb } from "antd";
+import { HomeOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import orderApi from "../../apis/orderApi";
-import { useHistory, useParams } from "react-router-dom";
-import ProductList from "../ProductList/productList";
-import axiosClient from "../../apis/axiosClient";
-import { PageHeader } from "@ant-design/pro-layout";
+import { useParams } from "react-router-dom";
 import moment from "moment";
-const { Option } = Select;
-const { confirm } = Modal;
-const DATE_TIME_FORMAT = "DD/MM/YYYY HH:mm";
-const { Title } = Typography;
 
 const OrderDetail = () => {
   const [order, setOrder] = useState([]);
-  const [openModalCreate, setOpenModalCreate] = useState(false);
-  const [openModalUpdate, setOpenModalUpdate] = useState(false);
+
   const [loading, setLoading] = useState(true);
-  const [form] = Form.useForm();
-  const [form2] = Form.useForm();
+
   const [total, setTotalList] = useState();
-  const [currentPage, setCurrentPage] = useState(1);
   const { id } = useParams();
-
-  const history = useHistory();
-
-  const handleCategoryList = async () => {
-    try {
-      await orderApi.getListOrder({ page: 1, limit: 10000 }).then((res) => {
-        setTotalList(res.totalDocs);
-        setOrder(res.data.docs);
-        setLoading(false);
-      });
-    } catch (error) {
-      console.log("Failed to fetch event list:" + error);
-    }
-  };
-
-  function NoData() {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />;
-  }
 
   useEffect(() => {
     (async () => {
