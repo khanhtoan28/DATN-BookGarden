@@ -167,11 +167,7 @@ const OrderList = () => {
         </Select>
       ),
     },
-    {
-      title: "Mô tả",
-      dataIndex: "description",
-      key: "description",
-    },
+
     {
       title: "Hành động",
       key: "action",
