@@ -764,14 +764,32 @@ const ProductList = () => {
                   >
                     <Input placeholder="Giá gốc" type="number" />
                   </Form.Item>
+
                   <Form.Item
                     name="salePrice"
                     label="Giá giảm"
+                    dependencies={["price"]}
                     rules={[
                       {
                         required: true,
                         message: "Vui lòng nhập giá giảm!",
                       },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          const price = parseFloat(getFieldValue("price")); // Ép kiểu thành số
+                          const salePrice = parseFloat(value); // Ép kiểu thành số
+                          if (
+                            !isNaN(price) &&
+                            !isNaN(salePrice) &&
+                            price >= salePrice
+                          ) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(
+                            new Error("Giá giảm không được lớn hơn giá gốc!")
+                          );
+                        },
+                      }),
                     ]}
                     style={{ marginBottom: 10 }}
                   >
@@ -1147,11 +1165,28 @@ const ProductList = () => {
                 <Form.Item
                   name="salePrice"
                   label="Giá giảm"
+                  dependencies={["price"]}
                   rules={[
                     {
                       required: true,
-                      message: "Vui lòng nhập giá gốc!",
+                      message: "Vui lòng nhập giá giảm!",
                     },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        const price = parseFloat(getFieldValue("price")); // Ép kiểu thành số
+                        const salePrice = parseFloat(value); // Ép kiểu thành số
+                        if (
+                          !isNaN(price) &&
+                          !isNaN(salePrice) &&
+                          price >= salePrice
+                        ) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(
+                          new Error("Giá giảm không được lớn hơn giá gốc!")
+                        );
+                      },
+                    }),
                   ]}
                   style={{ marginBottom: 10 }}
                 >
