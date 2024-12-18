@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 const Product = require("../models/product");
 const User = require("../models/user");
 const nodemailer = require("nodemailer");
+const juice = require("juice");
+
 require("dotenv").config();
 
 const orderController = {
@@ -40,7 +42,7 @@ const orderController = {
     try {
       const insufficientStockProducts = [];
 
-      // Tạo đơn hàng mới
+      // Tạo đơn hàng mới mà không cần cung cấp mã đơn hàng vì MongoDB sẽ tự động tạo _id
       const order = new OrderModel({
         user: req.body.userId,
         products: req.body.products,
@@ -80,6 +82,7 @@ const orderController = {
         }
       }
 
+      // Lưu đơn hàng mới vào cơ sở dữ liệu
       const orderList = await order.save();
 
       // Lấy thông tin người dùng
@@ -88,28 +91,73 @@ const orderController = {
         return res.status(400).json({ message: "User email not found" });
       }
 
+      // Soạn danh sách sản phẩm cho email
+      const productDetails = await Promise.all(
+        req.body.products.map(async (productItem) => {
+          const product = await Product.findById(productItem.product);
+          return `
+            <tr>
+              <td style="padding: 10px; border: 1px solid #ddd; text-align: left;">${product.name}</td>
+              <td style="padding: 10px; border: 1px solid #ddd; text-align: left;">${productItem.stock}</td>
+              <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">${req.body.orderTotal}</td>
+            </tr>
+          `;
+        })
+      );
+
       // Soạn email thông báo
-      const emailContent = `
-        Xin chào ${user.username || "Khách hàng"},
+      const rawEmailContent = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; padding: 20px;">
+      <h2 style="color: #28a745; font-size: 24px; font-weight: bold;">Xin chào ${
+        user.username || "Khách hàng"
+      },</h2>
+      <p style="font-size: 16px; margin-bottom: 20px;">Đơn hàng của bạn đã được đặt thành công! Dưới đây là chi tiết đơn hàng:</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #ddd;">
+        <thead>
+          <tr style="background-color: #28a745; color: white;">
+            <th style="padding: 15px; font-size: 18px; text-align: left;">Sản phẩm</th>
+            <th style="padding: 15px; font-size: 18px; text-align: left;">Số lượng</th>
+            <th style="padding: 15px; font-size: 18px; text-align: right;">Tổng giá trị</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${productDetails.join("")}
+          
+          <tr>
+            <td style="padding: 15px; font-size: 16px; font-weight: bold; text-align: left;">Mã đơn hàng:</td>
+            <td style="padding: 15px; font-size: 16px;"></td>
+            <td style="padding: 15px; font-size: 16px;">${
+              orderList._id
+            }</td> <!-- Mã đơn hàng -->
+          </tr>
+          <tr>
+            <td style="padding: 15px; font-size: 16px; font-weight: bold; text-align: left;">Địa chỉ giao hàng:</td>
+            <td style="padding: 15px; font-size: 16px;"></td>
+            <td style="padding: 15px; font-size: 16px;">${req.body.address}</td>
+          </tr>
+          <tr>
+            <td style="padding: 15px; font-size: 16px; font-weight: bold; text-align: left;">Phương thức thanh toán:</td>
+            <td style="padding: 15px; font-size: 16px;"></td>
+            <td style="padding: 15px; font-size: 16px;">${req.body.billing}</td>
+          </tr>
+        </tbody>
+      </table>
+  
+      <p style="font-size: 16px;">Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi!</p>
+      <p style="font-size: 16px; font-weight: bold;">Trân trọng,</p>
+      <p style="font-size: 16px;">BookGarden</p>
+    </div>
+  `;
 
-        Đơn hàng của bạn đã được đặt thành công! Chi tiết đơn hàng:
-
-        - Tổng giá trị: ${req.body.orderTotal}
-        - Địa chỉ giao hàng: ${req.body.address}
-        - Phương thức thanh toán: ${req.body.billing}
-
-        Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi!
-
-        Trân trọng,
-        Đội ngũ cửa hàng
-      `;
+      const emailContent = juice(rawEmailContent); // Inline CSS using Juice
 
       // Cấu hình Nodemailer
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: process.env.EMAIL_USER, // Đọc email từ biến môi trường
-          pass: process.env.EMAIL_PASS, // Đọc mật khẩu từ biến môi trường
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
         },
       });
 
@@ -117,7 +165,7 @@ const orderController = {
         from: process.env.EMAIL_USER,
         to: user.email,
         subject: "Xác nhận đặt hàng thành công",
-        text: emailContent,
+        html: emailContent, // Use HTML with inline styles
       };
 
       // Gửi email
@@ -164,20 +212,53 @@ const orderController = {
       if (!user || !user.email) {
         return res.status(400).json({ message: "User email not found" });
       }
-
+      let statusDisplay;
+      switch (status) {
+        case "confirmed":
+          statusDisplay = "Đã xác nhận";
+          break;
+        case "shipping":
+          statusDisplay = "Đang vận chuyển";
+          break;
+        case "shipped successfully":
+          statusDisplay = "Đã giao thành công";
+          break;
+        case "final":
+          statusDisplay = "Hoàn thành";
+          break;
+        case "rejected":
+          statusDisplay = "Đã hủy";
+          break;
+        default:
+          statusDisplay = status; // Nếu không có trạng thái nào khớp, giữ nguyên giá trị ban đầu
+      }
       // Soạn nội dung email thông báo
       const emailContent = `
-        Xin chào ${user.username || "Khách hàng"},
-        
-        Đơn hàng của bạn đã được cập nhật trạng thái mới:
-        
-        - Mã đơn hàng: ${order._id}
-        - Trạng thái hiện tại: ${status}
-        
-        Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.
-        
-        Trân trọng,
-        BookGarden
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; padding: 20px;">
+          <h2 style="color: #28a745; font-size: 24px; font-weight: bold;">Xin chào ${
+            user.username || "Khách hàng"
+          }</h2>
+          <p style="font-size: 16px; margin-bottom: 20px;">Đơn hàng của bạn đã được cập nhật trạng thái mới:</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #ddd;">
+            <thead>
+              <tr style="background-color: #28a745; color: white;">
+                <th style="padding: 15px; font-size: 18px; text-align: left;">Mã đơn hàng</th>
+                <th style="padding: 15px; font-size: 18px; text-align: left;">Trạng thái hiện tại</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 15px; font-size: 16px;">${order._id}</td>
+                <td style="padding: 15px; font-size: 16px;">${statusDisplay}</td>
+              </tr>
+            </tbody>
+          </table>
+  
+          <p style="font-size: 16px;">Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
+          <p style="font-size: 16px; font-weight: bold;">Trân trọng,</p>
+          <p style="font-size: 16px;">BookGarden</p>
+        </div>
       `;
 
       // Cấu hình Nodemailer
@@ -193,7 +274,7 @@ const orderController = {
         from: process.env.EMAIL_USER,
         to: user.email,
         subject: "Cập nhật trạng thái đơn hàng",
-        text: emailContent,
+        html: emailContent, // Use HTML with inline styles
       };
 
       // Gửi email
