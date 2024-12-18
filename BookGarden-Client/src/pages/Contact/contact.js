@@ -18,12 +18,12 @@ const Contact = () => {
               <div class="row">
                 <div class="col-lg-4">
                   <img
-                    class="rounded-circle shadow-1-strong mb-4"
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img%20(1).webp"
+                    class="rounded-circle shadow-1-strong mb-4 ml-20"
+                    src="https://images.findagrave.com/photos/2024/285/196084392_2d692832-6744-4b81-a158-aa94edd5e032.jpeg"
                     alt="avatar"
                   />
-                  <h5 class="mb-3">Anna Deynah</h5>
-                  <p>UX Designer</p>
+                  <h5 class="mb-3">Fujiko Fujio</h5>
+                  <p>Tác giả Doraemon</p>
                   <p class="text-muted">
                     <i class="fas fa-quote-left pe-2"></i>
                     Đằng sau thành công của một con người không thể thiếu một
@@ -53,12 +53,12 @@ const Contact = () => {
 
                 <div class="col-lg-4 d-none d-lg-block">
                   <img
-                    class="rounded-circle shadow-1-strong mb-4"
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img%20(32).webp"
+                    class="rounded-circle shadow-1-strong mb-4 ml-24"
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQq25Tz_2DQhrmDNLVITqOPB0xg-qExZ0N2sg&s"
                     alt="avatar"
                   />
-                  <h5 class="mb-3">John Doe</h5>
-                  <p>Web Developer</p>
+                  <h5 class="mb-3">Huỳnh Như Phương </h5>
+                  <p>Tác giả của Giấc Mơ, Cảnh Tượng Và Cái Nhìn</p>
                   <p class="text-muted">
                     <i class="fas fa-quote-left pe-2"></i>
                     Sách không chỉ là kho tàng kiến thức mà còn là phép màu kỳ
@@ -88,12 +88,12 @@ const Contact = () => {
 
                 <div class="col-lg-4 d-none d-lg-block">
                   <img
-                    class="rounded-circle shadow-1-strong mb-4"
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img%20(10).webp"
+                    class="rounded-circle shadow-1-strong mb-4 ml-24"
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZWbOvFLCmbC4PcDH5rmWZMMYM-Xnv70KmKg&s"
                     alt="avatar"
                   />
-                  <h5 class="mb-3">Maria Kate</h5>
-                  <p>Photographer</p>
+                  <h5 class="mb-3">Aoyama Gōshō </h5>
+                  <p>Tác giả của Thám tử lừng danh Conan</p>
                   <p class="text-muted">
                     <i class="fas fa-quote-left pe-2"></i>
                     Để ra đời một cuốn sách hay, tác giả phải chọn lọc và sử
