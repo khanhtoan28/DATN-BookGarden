@@ -278,7 +278,10 @@ const Pay = () => {
         const currentUser = JSON.parse(local);
 
         // Tính toán tổng số tiền (bao gồm phí ship)
-        const totalAmount = Number(totalPrice) + Number(totalFee); // Đảm bảo tổng tiền bao gồm phí ship
+        const defaultShippingFee = 39001; // Phí ship mặc định
+
+        // Đảm bảo tổng tiền bao gồm phí ship
+        const totalAmount = Number(totalPrice) + defaultShippingFee;
 
         const formatData = {
           userId: currentUser._id,
@@ -291,6 +294,7 @@ const Pay = () => {
           paymentId: paymentId, // Lưu paymentId
           payerId: PayerID, // Lưu PayerID
         };
+
         console.log("formatData trước khi gửi:", formatData);
         // Gửi yêu cầu lưu đơn hàng vào CSDL
         const orderResponse = await axiosClient.post("/order", formatData);
