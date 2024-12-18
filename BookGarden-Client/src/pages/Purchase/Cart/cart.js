@@ -88,21 +88,30 @@ const Cart = () => {
         console.error("Lỗi khi gọi API:", error);
       });
   };
-
   const handleDelete = (productId) => {
+    // Lọc lại giỏ hàng
     const updatedCart = productDetail.filter(
       (product) => product._id !== productId
     );
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
-    setProductDetail(updatedCart);
-    setCartLength(updatedCart.length);
 
+    // Lưu giỏ hàng đã cập nhật vào localStorage
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+
+    // Cập nhật các trạng thái
+    setProductDetail(updatedCart); // Cập nhật danh sách sản phẩm
+    setCartLength(updatedCart.length); // Cập nhật số lượng sản phẩm trong giỏ hàng
+
+    // Tính lại tổng giá trị giỏ hàng
     const total = updatedCart.reduce(
       (acc, item) => acc + item.stock * item.salePrice,
       0
     );
     setCartTotal(total);
 
+    // Hiển thị thông báo thành công
+    message.success("Sản phẩm đã được xóa khỏi giỏ hàng!");
+
+    // Tự động reload trang sau khi xóa sản phẩm
     window.location.reload();
   };
 
