@@ -150,32 +150,38 @@ app.get("/api/update-complaint/:id", async (req, res) => {
 
     // Nội dung email thông báo
     const emailContent = `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; padding: 20px;">
-        <h2 style="color: #28a745; font-size: 24px; font-weight: bold;">Xin chào ${
-          data.user.username || "Khách hàng"
-        }</h2>
-        <p style="font-size: 16px; margin-bottom: 20px;">Khiếu nại của bạn đã được cập nhật trạng thái mới:</p>
-        
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #ddd;">
-          <thead>
-            <tr style="background-color: #28a745; color: white;">
-              <th style="padding: 15px; font-size: 18px; text-align: left;">Mã khiếu nại</th>
-              <th style="padding: 15px; font-size: 18px; text-align: left;">Trạng thái hiện tại</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding: 15px; font-size: 16px;">${complaint._id}</td>
-              <td style="padding: 15px; font-size: 16px;">${statusDisplay}</td>
-            </tr>
-          </tbody>
-        </table>
+  <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; padding: 20px; border-radius: 8px; max-width: 700px; margin: auto; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+    <h2 style="color: #20c997; font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 20px;">Cập nhật trạng thái khiếu nại</h2>
+    <p style="font-size: 16px; text-align: center; margin-bottom: 30px;">Xin chào <strong>${
+      data.user.username || "Khách hàng"
+    }</strong>, trạng thái khiếu nại của bạn đã được cập nhật. Dưới đây là chi tiết:</p>
+    
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+      <thead>
+        <tr style="background-color: #20c997; color: #fff; text-align: left;">
+          <th style="padding: 12px; font-size: 16px;">Mã khiếu nại</th>
+          <th style="padding: 12px; font-size: 16px;">Trạng thái hiện tại</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background-color: #f9f9f9;">
+          <td style="padding: 12px; font-size: 16px;">${complaint._id}</td>
+          <td style="padding: 12px; font-size: 16px;">${statusDisplay}</td>
+        </tr>
+      </tbody>
+    </table>
 
-        <p style="font-size: 16px;">Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
-        <p style="font-size: 16px; font-weight: bold;">Trân trọng,</p>
-        <p style="font-size: 16px;">BookGarden</p>
-      </div>
-    `;
+    <div style="margin-top: 20px; padding: 15px; background-color: #eafaf1; border-radius: 8px; text-align: center;">
+      <p style="font-size: 16px; margin: 0;">Cảm ơn bạn đã tin tưởng dịch vụ của <strong>BookGarden</strong>!</p>
+      <p style="font-size: 16px; font-weight: bold; margin: 5px 0;">Chúng tôi luôn sẵn sàng hỗ trợ bạn.</p>
+    </div>
+
+    <footer style="margin-top: 30px; text-align: center; font-size: 14px; color: #555;">
+      <p style="margin: 5px 0;">BookGarden - Cửa hàng sách yêu thương</p>
+      <p style="margin: 5px 0;">Hotline: 1900 123 456 | Email: support@bookgarden.com</p>
+    </footer>
+  </div>
+`;
 
     // Cấu hình Nodemailer
     const transporter = nodemailer.createTransport({

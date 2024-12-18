@@ -36,7 +36,7 @@ function Topbar() {
   const [contentNotification, setContentNotification] = useState("");
   const [visibleDrawer, setVisibleDrawer] = useState(false);
   const [userData, setUserData] = useState([]);
-  const [cart, setCart] = useState();
+  const [cart, setCart] = useState(0); // Khởi tạo cart là số lượng sản phẩm trong giỏ
 
   const history = useHistory();
 
@@ -90,14 +90,16 @@ function Topbar() {
   };
 
   useEffect(() => {
+    // Lấy dữ liệu người dùng và giỏ hàng từ localStorage
     (async () => {
       try {
         const local = localStorage.getItem("user");
         const user = JSON.parse(local);
-        const cart = localStorage.getItem("cartLength");
-        console.log(cart);
-        setCart(cart);
         setUserData(user);
+
+        // Lấy giỏ hàng từ localStorage và tính toán số lượng sản phẩm trong giỏ
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        setCart(cart.length); // Cập nhật lại số lượng giỏ hàng
       } catch (error) {
         console.log("Failed to fetch profile user:" + error);
       }
@@ -176,7 +178,7 @@ function Topbar() {
                 <ShoppingCartOutlined
                   style={{ fontSize: "32px", color: "#FFFFFF" }}
                 />
-                {cart}
+                {cart} {/* Hiển thị số lượng giỏ hàng */}
               </p>
             </Col>
             <Col>

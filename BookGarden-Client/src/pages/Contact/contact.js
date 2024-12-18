@@ -18,12 +18,12 @@ const Contact = () => {
               <div class="row">
                 <div class="col-lg-4">
                   <img
-                    class="rounded-circle shadow-1-strong mb-4"
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img%20(1).webp"
+                    class="rounded-circle shadow-1-strong mb-4 ml-20"
+                    src="https://images.findagrave.com/photos/2024/285/196084392_2d692832-6744-4b81-a158-aa94edd5e032.jpeg"
                     alt="avatar"
                   />
-                  <h5 class="mb-3">Anna Deynah</h5>
-                  <p>UX Designer</p>
+                  <h5 class="mb-3">Fujiko Fujio</h5>
+                  <p>Tác giả Doraemon</p>
                   <p class="text-muted">
                     <i class="fas fa-quote-left pe-2"></i>
                     Đằng sau thành công của một con người không thể thiếu một
@@ -53,12 +53,12 @@ const Contact = () => {
 
                 <div class="col-lg-4 d-none d-lg-block">
                   <img
-                    class="rounded-circle shadow-1-strong mb-4"
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img%20(32).webp"
+                    class="rounded-circle shadow-1-strong mb-4 ml-24"
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQq25Tz_2DQhrmDNLVITqOPB0xg-qExZ0N2sg&s"
                     alt="avatar"
                   />
-                  <h5 class="mb-3">John Doe</h5>
-                  <p>Web Developer</p>
+                  <h5 class="mb-3">Huỳnh Như Phương </h5>
+                  <p>Tác giả của Giấc Mơ, Cảnh Tượng Và Cái Nhìn</p>
                   <p class="text-muted">
                     <i class="fas fa-quote-left pe-2"></i>
                     Sách không chỉ là kho tàng kiến thức mà còn là phép màu kỳ
@@ -88,12 +88,12 @@ const Contact = () => {
 
                 <div class="col-lg-4 d-none d-lg-block">
                   <img
-                    class="rounded-circle shadow-1-strong mb-4"
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img%20(10).webp"
+                    class="rounded-circle shadow-1-strong mb-4 ml-24"
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZWbOvFLCmbC4PcDH5rmWZMMYM-Xnv70KmKg&s"
                     alt="avatar"
                   />
-                  <h5 class="mb-3">Maria Kate</h5>
-                  <p>Photographer</p>
+                  <h5 class="mb-3">Aoyama Gōshō </h5>
+                  <p>Tác giả của Thám tử lừng danh Conan</p>
                   <p class="text-muted">
                     <i class="fas fa-quote-left pe-2"></i>
                     Để ra đời một cuốn sách hay, tác giả phải chọn lọc và sử
@@ -127,13 +127,12 @@ const Contact = () => {
       </div>
       <div class="container pb-5">
         <section class="text-center">
-          <h3 class="mb-5">Liên hệ</h3>
           <div class="row">
             <div class="col-lg-5">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3723.863806019075!2d105.74468687471467!3d21.038134787457583!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x313455e940879933%3A0xcf10b34e9f1a03df!2zVHLGsOG7nW5nIENhbyDEkeG6s25nIEZQVCBQb2x5dGVjaG5pYw!5e0!3m2!1sen!2s!4v1733412890028!5m2!1sen!2s"
-                width="400"
-                height="300"
+                width="460"
+                height="450"
                 allowfullscreen=""
                 loading="lazy"
                 referrerpolicy="no-referrer-when-downgrade"
@@ -141,24 +140,47 @@ const Contact = () => {
             </div>
 
             <div class="col-lg-7">
-              <form>
+              <form className="p-4 rounded shadow-lg bg-light">
                 <div className="row">
                   <div className="col-md-6 mb-4">
-                    <Input type="text" placeholder="Họ tên" />
+                    <label className="form-label">Họ tên</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Nhập họ tên"
+                    />
                   </div>
                   <div className="col-md-6 mb-4">
-                    <Input type="email" placeholder="Địa chỉ email" />
+                    <label className="form-label">Địa chỉ email</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      placeholder="Nhập địa chỉ email"
+                    />
                   </div>
                   <div className="col-md-12 mb-4">
-                    <Input type="text" placeholder="Chủ đề" />
+                    <label className="form-label">Chủ đề</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Nhập chủ đề"
+                    />
                   </div>
                   <div className="col-md-12 mb-4">
-                    <TextArea rows={4} placeholder="Nội dung" />
+                    <label className="form-label">Nội dung</label>
+                    <textarea
+                      rows="4"
+                      className="form-control"
+                      placeholder="Nhập nội dung"
+                    ></textarea>
                   </div>
-                  <div className="col-md-12">
-                    <Button type="primary" htmlType="submit">
-                      Hoàn thành
-                    </Button>
+                  <div className="col-md-12 text-center">
+                    <button
+                      type="submit"
+                      className="btn btn-primary btn-lg w-100"
+                    >
+                      Gửi
+                    </button>
                   </div>
                 </div>
               </form>
