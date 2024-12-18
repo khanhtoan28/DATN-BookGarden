@@ -22,6 +22,7 @@ const paymentRoute = require("./app/routers/paypal");
 const newsRoute = require("./app/routers/news");
 const complaintModel = require("./app/models/complaintModel");
 const order = require("./app/models/order");
+const vnpayRoute = require("./app/routers/vnpay");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
@@ -47,6 +48,7 @@ app.use("/api/statistical", statisticalRoute);
 app.use("/api/order", orderRoute);
 app.use("/api/payment", paymentRoute);
 app.use("/api/news", newsRoute);
+app.use("/api/vnpay", vnpayRoute);
 app.use("/uploads", express.static("uploads"));
 // sendEmailNotification();
 app.get("/api/complaint/:id", async (req, res) => {
@@ -123,54 +125,57 @@ app.get("/api/update-complaint/:id", async (req, res) => {
         }
       );
     }
-    // Route DELETE để hủy khiếu nại
-    app.delete("/api/complaint/:id", async (req, res) => {
-      try {
-        const complaint = await complaintModel.findById(req.params.id); // Tìm khiếu nại theo id
 
-        if (!complaint) {
-          return res.status(404).json({ message: "Không tìm thấy khiếu nại" });
-        }
+    // Dịch trạng thái đơn hàng
+    let statusDisplay;
+    switch (req.query.status) {
+      case "cancelcomplaint":
+        statusDisplay = "Hủy khiếu nại";
+        break;
+      case "refundcomplaint":
+        statusDisplay = "Đang hoàn trả";
+        break;
+      case "acceptcomplaint":
+        statusDisplay = "Đã xác nhận";
+        break;
+      case "pendingcomplaint":
+        statusDisplay = "Đang chờ";
+        break;
+      case "finalcomplaint":
+        statusDisplay = "Đã hoàn thành";
+        break;
+      default:
+        statusDisplay = req.query.status; // Nếu không có trạng thái nào khớp, giữ nguyên giá trị ban đầu
+    }
 
-        // Kiểm tra trạng thái của khiếu nại, chỉ cho phép hủy khiếu nại với trạng thái 'pendingcomplaint'
-        if (complaint.status !== "pendingcomplaint") {
-          return res.status(400).json({
-            message:
-              "Không thể hủy khiếu nại này vì trạng thái không phải 'pendingcomplaint'",
-          });
-        }
-
-        // Cập nhật trạng thái đơn hàng tương ứng (nếu có)
-        await order.findByIdAndUpdate(
-          complaint.orderId,
-          {
-            $set: {
-              status: "completed", // Hoặc trạng thái nào đó tương ứng với việc hủy khiếu nại
-            },
-          },
-          {
-            new: true,
-          }
-        );
-
-        // Xóa khiếu nại
-        await complaint.remove();
-
-        res.status(200).json({ message: "Hủy khiếu nại thành công" });
-      } catch (error) {
-        res.status(500).json({ message: "Lỗi khi xóa khiếu nại", error });
-      }
-    });
-
+    // Nội dung email thông báo
     const emailContent = `
-        Xin chào ${"Khách hàng"},
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; padding: 20px;">
+        <h2 style="color: #28a745; font-size: 24px; font-weight: bold;">Xin chào ${
+          data.user.username || "Khách hàng"
+        }</h2>
+        <p style="font-size: 16px; margin-bottom: 20px;">Khiếu nại của bạn đã được cập nhật trạng thái mới:</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #ddd;">
+          <thead>
+            <tr style="background-color: #28a745; color: white;">
+              <th style="padding: 15px; font-size: 18px; text-align: left;">Mã khiếu nại</th>
+              <th style="padding: 15px; font-size: 18px; text-align: left;">Trạng thái hiện tại</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 15px; font-size: 16px;">${complaint._id}</td>
+              <td style="padding: 15px; font-size: 16px;">${statusDisplay}</td>
+            </tr>
+          </tbody>
+        </table>
 
-        Khiếu nại của bạn đã được cập nhật trạng thái mới: ${req.query.status}
-
-        Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.
-        Trân trọng,
-        BookGarden
-      `;
+        <p style="font-size: 16px;">Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
+        <p style="font-size: 16px; font-weight: bold;">Trân trọng,</p>
+        <p style="font-size: 16px;">BookGarden</p>
+      </div>
+    `;
 
     // Cấu hình Nodemailer
     const transporter = nodemailer.createTransport({
@@ -185,7 +190,7 @@ app.get("/api/update-complaint/:id", async (req, res) => {
       from: process.env.EMAIL_USER,
       to: data.user.email,
       subject: "Cập nhật trạng thái khiếu nại",
-      text: emailContent,
+      html: emailContent, // Dùng HTML với kiểu dáng inline
     };
 
     // Gửi email
@@ -195,6 +200,7 @@ app.get("/api/update-complaint/:id", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 const PORT = process.env.PORT || _CONST.PORT;
 
 app.listen(PORT, () => {

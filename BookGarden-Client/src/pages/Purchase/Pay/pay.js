@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from "react";
-import styles from "./pay.css";
 import axiosClient from "../../../apis/axiosClient";
 import { useParams } from "react-router-dom";
-import eventApi from "../../../apis/eventApi";
-import userApi from "../../../apis/userApi";
 import productApi from "../../../apis/productApi";
 import { useHistory } from "react-router-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Col, Row, Tag, Spin, Card } from "antd";
-import { DateTime } from "../../../utils/dateTime";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import {
   Typography,
-  Button,
   Steps,
   Breadcrumb,
   Modal,
@@ -23,8 +17,6 @@ import {
   Radio,
 } from "antd";
 import { LeftSquareOutlined } from "@ant-design/icons";
-
-import Slider from "react-slick";
 import axios from "axios";
 
 const { Meta } = Card;
@@ -57,7 +49,64 @@ const Pay = () => {
   const [totalFee, setTotalFee] = useState(0);
 
   const accountCreate = async (values) => {
-    console.log(values, "values");
+    // Tính toán tổng tiền (bao gồm phí ship)
+    const totalAmount = Number(totalPrice) + Number(totalFee);
+
+    if (values.billing === "vnpay") {
+      try {
+        // Lưu thông tin đơn hàng vào localStorage
+        localStorage.setItem(
+          "vnpay_order_info",
+          JSON.stringify({
+            userId: userData._id,
+            address: values.address,
+            billing: values.billing,
+            description: values.description,
+            status: "pending",
+            products: productDetail,
+            orderTotal: totalAmount,
+          })
+        );
+
+        // Lưu thông tin địa chỉ và mô tả
+        localStorage.setItem("vnpay_description", values.description);
+        localStorage.setItem("vnpay_address", values.address);
+
+        // Dữ liệu thanh toán VNPAY
+        const vnpayData = {
+          amount: totalAmount,
+          orderDescription: values.description || "Thanh toán đơn hàng",
+          orderType: "billpayment",
+          language: "vn",
+          returnUrl: "http://localhost:3500/pay",
+        };
+
+        // Gọi API tạo URL thanh toán VNPAY
+        const response = await axiosClient.post(
+          "/vnpay/create-payment-url",
+          vnpayData
+        );
+
+        if (response.paymentUrl) {
+          // Chuyển hướng đến trang thanh toán VNPAY
+          window.location.href = response.paymentUrl;
+        } else {
+          notification["error"]({
+            message: `Thông báo`,
+            description: "Không thể tạo đường dẫn thanh toán VNPAY",
+          });
+        }
+      } catch (error) {
+        console.error("VNPAY Payment Error:", error);
+        notification["error"]({
+          message: `Thông báo`,
+          description: "Lỗi trong quá trình tạo thanh toán VNPAY",
+        });
+      }
+      return;
+    }
+
+    // Giữ nguyên logic cho PayPal
     if (values.billing === "paypal") {
       localStorage.setItem("description", values.description);
       localStorage.setItem("address", values.address);
@@ -80,6 +129,7 @@ const Pay = () => {
         });
       }
     } else {
+      // Giữ nguyên logic cho COD
       try {
         const formatData = {
           userId: userData._id,
@@ -133,28 +183,74 @@ const Pay = () => {
       // Tính toán tổng tiền (bao gồm phí ship)
       const totalAmount = Number(totalPrice) + Number(totalFee);
 
-      // Chuyển đổi tổng tiền sang USD
-      const totalAmountInUSD = (totalAmount / exchangeRate).toFixed(2); // Giả sử bạn có tỷ giá hối đoái
+      if (values.billing === "vnpay") {
+        // Lưu thông tin địa chỉ và mô tả vào localStorage
+        localStorage.setItem("vnpay_description", values.description);
+        localStorage.setItem("vnpay_address", values.address);
 
-      const productPayment = {
-        price: totalAmountInUSD.toString(), // Chuyển đổi thành chuỗi
-        description: values.description, // Sử dụng description từ form
-        return_url: "http://localhost:3500" + location.pathname,
-        cancel_url: "http://localhost:3500" + location.pathname,
-      };
+        const vnpayData = {
+          amount: totalAmount, // Tổng số tiền thanh toán
+          orderDescription: values.description || "Thanh toán đơn hàng",
+          orderType: "billpayment",
+          language: "vn",
+          returnUrl: "http://localhost:3500/pay", // URL trả về sau khi thanh toán
+        };
 
-      const response = await axiosClient.post("/payment/pay", productPayment);
-      if (response.approvalUrl) {
-        localStorage.setItem("session_paypal", response.accessToken);
-        return response.approvalUrl; // Trả về URL thanh toán
-      } else {
-        notification["error"]({
-          message: `Thông báo`,
-          description: "Thanh toán thất bại",
-        });
-        return null;
+        try {
+          // Gọi API tạo URL thanh toán VNPAY
+          const response = await axiosClient.post(
+            "/vnpay/create-payment-url",
+            vnpayData
+          );
+
+          if (response.paymentUrl) {
+            // Chuyển hướng đến trang thanh toán VNPAY
+            window.location.href = response.paymentUrl;
+          } else {
+            notification["error"]({
+              message: `Thông báo`,
+              description: "Không thể tạo đường dẫn thanh toán VNPAY",
+            });
+          }
+        } catch (error) {
+          console.error("VNPAY Payment Error:", error);
+          notification["error"]({
+            message: `Thông báo`,
+            description: "Lỗi trong quá trình tạo thanh toán VNPAY",
+          });
+        }
+
+        return null; // Trả về null để ngăn các xử lý tiếp theo
+      }
+
+      // Giữ nguyên logic cho PayPal
+      if (values.billing === "paypal") {
+        const totalAmountInUSD = (totalAmount / exchangeRate).toFixed(2);
+        const productPayment = {
+          price: totalAmountInUSD.toString(),
+          description: values.description,
+          return_url: "http://localhost:3500" + location.pathname,
+          cancel_url: "http://localhost:3500" + location.pathname,
+        };
+
+        const response = await axiosClient.post("/payment/pay", productPayment);
+        if (response.approvalUrl) {
+          localStorage.setItem("session_paypal", response.accessToken);
+          return response.approvalUrl;
+        } else {
+          notification["error"]({
+            message: `Thông báo`,
+            description: "Thanh toán thất bại",
+          });
+          return null;
+        }
       }
     } catch (error) {
+      console.error("Payment Error:", error);
+      notification["error"]({
+        message: `Thông báo`,
+        description: "Có lỗi xảy ra trong quá trình thanh toán",
+      });
       throw error;
     }
   };
@@ -182,7 +278,7 @@ const Pay = () => {
         const currentUser = JSON.parse(local);
 
         // Tính toán tổng số tiền (bao gồm phí ship)
-        const totalAmount = Number(totalPrice) + Number(totalFee);
+        const totalAmount = Number(totalPrice) + Number(totalFee); // Đảm bảo tổng tiền bao gồm phí ship
 
         const formatData = {
           userId: currentUser._id,
@@ -195,7 +291,7 @@ const Pay = () => {
           paymentId: paymentId, // Lưu paymentId
           payerId: PayerID, // Lưu PayerID
         };
-
+        console.log("formatData trước khi gửi:", formatData);
         // Gửi yêu cầu lưu đơn hàng vào CSDL
         const orderResponse = await axiosClient.post("/order", formatData);
         if (orderResponse) {
@@ -241,21 +337,26 @@ const Pay = () => {
   useEffect(() => {
     (async () => {
       try {
+        // Kiểm tra PayPal
         if (paymentId) {
           setShowModal(true);
         }
 
+        // Các logic ban đầu
         await productApi.getDetailProduct(id).then((item) => {
           setProductDetail(item);
         });
+
         const local = localStorage.getItem("user");
         const user = JSON.parse(local);
         console.log(user);
+
         form.setFieldsValue({
           name: user.username,
           email: user.email,
           phone: user.phone,
         });
+
         const cart = JSON.parse(localStorage.getItem("cart")) || [];
         console.log(cart);
 
@@ -267,6 +368,7 @@ const Pay = () => {
             price,
           })
         );
+
         let totalPrice = 0;
 
         for (let i = 0; i < transformedData.length; i++) {
@@ -283,8 +385,10 @@ const Pay = () => {
         setLoading(false);
       } catch (error) {
         console.log("Failed to fetch event detail:" + error);
+        setLoading(false);
       }
     })();
+
     window.scrollTo(0, 0);
   }, []);
   const [tinh, setTinh] = useState([]); // Danh sách tỉnh
@@ -403,6 +507,7 @@ const Pay = () => {
   useEffect(() => {
     fetchTinh();
   }, []);
+  const [selected, setSelected] = useState("null");
   return (
     <div class="py-5">
       <Spin spinning={false}>
@@ -617,10 +722,66 @@ const Pay = () => {
                     ]}
                     style={{ marginBottom: 10 }}
                   >
-                    <Radio.Group>
-                      <Radio value={"cod"}>COD</Radio>
-                      <Radio value={"paypal"}>PAYPAL</Radio>
-                    </Radio.Group>
+                    <div className="flex space-x-4">
+                      {/* COD */}
+                      <label
+                        className={`text-gray-900 bg-[#37df37] hover:bg-[#37df37]/90 focus:ring-4 focus:outline-none focus:ring-[#37df37]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#37df37]/50 me-2 mb-2 ${
+                          selected === "cod"
+                            ? "font-bold border-2 border-37df37-500 bg-37df37-50 text-37df37-700"
+                            : "border border-gray-300"
+                        }`}
+                      >
+                        <img
+                          src="givemoney.png"
+                          alt="COD"
+                          className="w-6 h-6"
+                        />
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="cod"
+                          className="hidden"
+                          onChange={() => setSelected("cod")}
+                        />
+                        <span className="ml-2 text-gray-700">
+                          Thanh toán khi nhận hàng
+                        </span>
+                      </label>
+
+                      {/* PAYPAL */}
+                      <label
+                        className={`text-gray-900 bg-[#F7BE38] hover:bg-[#F7BE38]/90 focus:ring-4 focus:outline-none focus:ring-[#F7BE38]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#F7BE38]/50 me-2 mb-2 ${
+                          selected === "paypal"
+                            ? "font-bold border-2 border-F7BE38-500 bg-F7BE38-50 text-F7BE38-700"
+                            : "border border-gray-300"
+                        }`}
+                      >
+                        <svg
+                          className="w-4 h-4 text-blue-500 me-2"
+                          aria-hidden="true"
+                          focusable="false"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 384 512"
+                        >
+                          <path
+                            fill="currentColor"
+                            d="M111.4 295.9c-3.5 19.2-17.4 108.7-21.5 134-.3 1.8-1 2.5-3 2.5H12.3c-7.6 0-13.1-6.6-12.1-13.9L58.8 46.6c1.5-9.6 10.1-16.9 20-16.9 152.3 0 165.1-3.7 204 11.4 60.1 23.3 65.6 79.5 44 140.3-21.5 62.6-72.5 89.5-140.1 90.3-43.4 .7-69.5-7-75.3 24.2zM357.1 152c-1.8-1.3-2.5-1.8-3 1.3-2 11.4-5.1 22.5-8.8 33.6-39.9 113.8-150.5 103.9-204.5 103.9-6.1 0-10.1 3.3-10.9 9.4-22.6 140.4-27.1 169.7-27.1 169.7-1 7.1 3.5 12.9 10.6 12.9h63.5c8.6 0 15.7-6.3 17.4-14.9 .7-5.4-1.1 6.1 14.4-91.3 4.6-22 14.3-19.7 29.3-19.7 71 0 126.4-28.8 142.9-112.3 6.5-34.8 4.6-71.4-23.8-92.6z"
+                          ></path>
+                        </svg>
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="paypal"
+                          className="hidden"
+                          onChange={() => setSelected("paypal")}
+                        />
+                        <span className="ml-2 text-gray-700">
+                          Thanh toán bằng PAYPAL
+                        </span>
+                      </label>
+
+                      {/* VNPAY */}
+                    </div>
                   </Form.Item>
                   <div className="flex justify-end space-x-2 mt-4">
                     <button

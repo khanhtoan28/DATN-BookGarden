@@ -120,6 +120,7 @@ const Complaint = () => {
           description: values.description,
           slug: values.slug,
         };
+
         await axiosClient
           .put("/category/" + id, categoryList)
           .then((response) => {
@@ -266,10 +267,28 @@ const Complaint = () => {
             <Select
               value={record.status}
               onChange={async (value) => {
-                await fetch(
-                  `http://localhost:3100/api/update-complaint/${record._id}?status=${value}`
-                );
-                handelFetch();
+                try {
+                  const response = await fetch(
+                    `http://localhost:3100/api/update-complaint/${record._id}?status=${value}`
+                  );
+                  if (response.ok) {
+                    notification["success"]({
+                      message: "Thông báo",
+                      description: `Cập nhật trạng thái thành công!`,
+                    });
+                    handelFetch(); // Cập nhật lại danh sách sau khi thay đổi
+                  } else {
+                    notification["error"]({
+                      message: "Thông báo",
+                      description: `Cập nhật trạng thái thất bại!`,
+                    });
+                  }
+                } catch (error) {
+                  notification["error"]({
+                    message: "Thông báo",
+                    description: `Đã xảy ra lỗi: ${error.message}`,
+                  });
+                }
               }}
               style={{ width: 160 }}
             >
