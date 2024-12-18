@@ -134,24 +134,6 @@ const ProductList = () => {
                   </div>
                 ))}
               </div>
-
-              {/* Bộ lọc theo giá */}
-              <div className="mb-6">
-                <h3 className="font-bold text-lg mb-4">Lọc theo giá</h3>
-                <Slider
-                  range
-                  min={0}
-                  max={1000000}
-                  step={10000}
-                  defaultValue={priceRange}
-                  onChange={handlePriceChange}
-                  tipFormatter={(value) => `${numberWithCommas(value)} đ`}
-                />
-                <div className="text-sm mt-2">
-                  <span>{numberWithCommas(priceRange[0])} đ</span> -{" "}
-                  <span>{numberWithCommas(priceRange[1])} đ</span>
-                </div>
-              </div>
             </div>
 
             {/* Content - Danh sách sản phẩm */}
