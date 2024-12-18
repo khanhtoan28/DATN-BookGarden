@@ -51,6 +51,7 @@ const Cart = () => {
           return;
         }
 
+        // Kiểm tra giới hạn tồn kho
         if (newStock > availableStock) {
           message.error(
             `Số lượng bạn nhập (${newStock}) lớn hơn số lượng tồn kho (${availableStock}). Vui lòng nhập lại.`
@@ -58,6 +59,15 @@ const Cart = () => {
           return;
         }
 
+        // Kiểm tra giới hạn tối đa
+        if (newStock > 100) {
+          message.error(
+            "Bạn chỉ được phép mua tối đa 100 sản phẩm cho mỗi mặt hàng."
+          );
+          return;
+        }
+
+        // Cập nhật giỏ hàng nếu hợp lệ
         const updatedCart = productDetail.map((item) => {
           if (item._id === productId) {
             item.stock = newStock;
@@ -153,7 +163,7 @@ const Cart = () => {
       key: "stock",
       render: (text, record) => (
         <InputNumber
-          min={0}
+          min={1}
           max={record?.availableStock} // Giới hạn số lượng theo tồn kho
           defaultValue={text}
           onChange={(value) => updateStock(record._id, value)}

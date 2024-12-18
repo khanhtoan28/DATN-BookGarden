@@ -94,7 +94,38 @@ const CartHistory = () => {
       throw error;
     }
   };
+  const handleAutoCompleteOrder = async (orderId) => {
+    try {
+      const updatedOrder = {
+        status: "final", // Chuyển trạng thái sang 'final'
+      };
 
+      await axiosClient.put(`/order/${orderId}`, updatedOrder);
+
+      notification["success"]({
+        message: "Thông báo",
+        description: "Đơn hàng đã tự động chuyển sang hoàn thành!",
+      });
+
+      handleList(); // Cập nhật danh sách đơn hàng
+    } catch (error) {
+      notification["error"]({
+        message: "Lỗi",
+        description: "Không thể cập nhật trạng thái đơn hàng.",
+      });
+    }
+  };
+  useEffect(() => {
+    if (orderList.data) {
+      orderList.data.forEach((order) => {
+        if (order.status === "shipped successfully") {
+          setTimeout(() => {
+            handleAutoCompleteOrder(order._id);
+          }, 30000); // 30 giây
+        }
+      });
+    }
+  }, [orderList]);
   const columns = [
     {
       title: <div className="text-center">Thông tin sản phẩm</div>,
@@ -237,7 +268,6 @@ const CartHistory = () => {
                   onOk() {
                     // Sau khi xác nhận, chuyển hướng tới trang khiếu nại
                     history.push(`/complaint/${record._id}`);
-
                     // Hiển thị thông báo thành công
                   },
                   onCancel() {
@@ -368,33 +398,34 @@ const CartHistory = () => {
     },
 
     {
-      title: <div className="text-center">Địa chỉ</div>,
-      dataIndex: "address",
-      key: "address",
-      render: (address) => <div className="text-center">{address}</div>,
-    },
-
-    {
-      title: <div className="text-center">Hình thức thanh toán</div>,
-      dataIndex: "billing",
-      key: "billing",
-      render: (billing) => <div className="text-center">{billing}</div>,
-    },
-
-    {
-      title: <div className="text-center">Trạng thái</div>,
+      title: <div className="text-center">Trạng thái khiếu nại</div>,
       dataIndex: "status",
       key: "status",
       render: (slugs) => {
-        const checkStatus = {
-          finalcomplaint: "Đã hoàn thành",
-          pendingcomplaint: "Đang chờ",
-          acceptcomplaint: "Đã duyệt",
-          refundcomplaint: "Đang hoàn trả",
+        const statusStyles = {
+          finalcomplaint:
+            "bg-green-500 text-white py-1 px-4 rounded-full font-semibold", // Hoàn thành
+          pendingcomplaint:
+            "bg-gray-500 text-white py-1 px-4 rounded-full font-semibold", // Đang chờ
+          acceptcomplaint:
+            "bg-blue-500 text-white py-1 px-4 rounded-full font-semibold", // Đã duyệt
+          refundcomplaint:
+            "bg-yellow-500 text-white py-1 px-4 rounded-full font-semibold", // Đang hoàn trả
         };
+
         return (
           <span className="flex justify-center items-center w-full text-center">
-            {checkStatus[slugs]}
+            <div
+              className={
+                statusStyles[slugs] ||
+                "bg-gray-500 text-white py-1 px-4 rounded-full font-semibold"
+              }
+            >
+              {slugs === "finalcomplaint" && "Đã hoàn thành"}
+              {slugs === "pendingcomplaint" && "Đang chờ"}
+              {slugs === "acceptcomplaint" && "Đã duyệt"}
+              {slugs === "refundcomplaint" && "Đang hoàn trả"}
+            </div>
           </span>
         );
       },
@@ -410,6 +441,7 @@ const CartHistory = () => {
         </span>
       ),
     },
+
     {
       title: <div className="text-center">Action</div>,
       dataIndex: "complaintAction",
@@ -431,6 +463,7 @@ const CartHistory = () => {
       ),
     },
   ];
+
   const handleList = () => {
     (async () => {
       try {

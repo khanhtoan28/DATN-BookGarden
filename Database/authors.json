@@ -103,5 +103,20 @@
       "$date": "2024-10-19T17:41:25.955Z"
     },
     "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "67619905f0aa99d180b5eaa7"
+    },
+    "name": "Liberty Vittert",
+    "image": "http://localhost:3100/uploads\\1734449413330-Dr-Liberty-Vittert-Mathematician-Statistician-Big-Data-facial-recognition-at-Great-British-Speakers.webp",
+    "bio": "ok",
+    "createdAt": {
+      "$date": "2024-12-17T15:30:13.352Z"
+    },
+    "updatedAt": {
+      "$date": "2024-12-17T15:30:13.352Z"
+    },
+    "__v": 0
   }
 ]

@@ -62,7 +62,7 @@ const productController = {
         .then((product) => {
           if (!product) {
             // Nếu không tìm thấy sản phẩm, trả về lỗi 404
-            return res.status(404).json({ message: 'Product not found' });
+            return res.status(404).json({ message: "Product not found" });
           }
           // Trả về sản phẩm nếu tìm thấy
           res.status(200).json(product);
@@ -70,18 +70,16 @@ const productController = {
         .catch((err) => {
           // Xử lý lỗi nếu có vấn đề khi truy vấn
           if (!res.headersSent) {
-            res.status(500).json({ message: 'Server error', error: err });
+            res.status(500).json({ message: "Server error", error: err });
           }
         });
     } catch (err) {
       // Bắt lỗi không mong muốn và trả về lỗi server
       if (!res.headersSent) {
-        res.status(500).json({ message: 'Server error', error: err });
+        res.status(500).json({ message: "Server error", error: err });
       }
     }
   },
-  
-  
 
   createProduct: async (req, res) => {
     const {

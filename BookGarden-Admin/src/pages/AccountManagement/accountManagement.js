@@ -273,15 +273,7 @@ const AccountManagement = () => {
                       onConfirm={() => handleBanAccount(record)}
                       okText="Yes"
                       cancelText="No"
-                    >
-                      <Button
-                        size="small"
-                        icon={<StopOutlined />}
-                        style={{ width: 190, borderRadius: 15, height: 30 }}
-                      >
-                        {"Chặn tài khoản"}
-                      </Button>
-                    </Popconfirm>
+                    ></Popconfirm>
                   )
                 )}
               </div>
