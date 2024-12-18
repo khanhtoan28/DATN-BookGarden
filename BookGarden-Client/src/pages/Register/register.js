@@ -1,199 +1,163 @@
-import React, { useState } from "react";
+import React from "react";
 import "./register.css";
-import { DatePicker, Input } from "antd";
-import {
-  Card,
-  Table,
-  Space,
-  Tag,
-  PageHeader,
-  Divider,
-  Form,
-  Button,
-  notification,
-} from "antd";
+import { Input, Card, Form, Button, notification, Typography } from "antd";
 import {
   UserOutlined,
   LockOutlined,
   PhoneOutlined,
   MailOutlined,
-  AimOutlined,
-  MoneyCollectOutlined,
 } from "@ant-design/icons";
 import { useHistory, Link } from "react-router-dom";
 import axiosClient from "../../apis/axiosClient";
 
-const { Search } = Input;
+const { Title, Text } = Typography;
 
 const RegisterCustomer = () => {
-  const [delivery, setDelivery] = useState([]);
-  let history = useHistory();
+  const history = useHistory();
 
   const onFinish = async (values) => {
-    var today = new Date();
-    var dd = String(today.getDate()).padStart(2, "0");
-    var mm = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
-    var yyyy = today.getFullYear();
-    var date = yyyy + "-" + mm + "-" + dd;
+    const formatData = {
+      email: values.email,
+      username: values.username,
+      password: values.password,
+      phone: values.phoneNo,
+      role: "isClient",
+      status: "actived",
+    };
 
     try {
-      const formatData = {
-        email: values.email,
-        username: values.username,
-        password: values.password,
-        phone: values.phoneNo,
-        role: "isClient",
-        status: "actived",
-      };
-      await axiosClient
-        .post("http://localhost:3100/api/auth/register", formatData)
-        .then((response) => {
-          console.log(response);
-          if (response === "Email is exist") {
-            return notification["error"]({
-              message: "Thông báo",
-              description: "Email đã tồn tại",
-            });
-          }
-          if (response === undefined) {
-            notification["error"]({
-              message: "Thông báo",
-              description: "Đăng ký thất bại",
-            });
-          } else {
-            notification["success"]({
-              message: "Thông báo",
-              description: "Đăng kí thành công",
-            });
-            setTimeout(function () {
-              history.push("/login");
-            }, 1000);
-          }
+      const response = await axiosClient.post(
+        "http://localhost:3100/api/auth/register",
+        formatData
+      );
+      if (response === "Email is exist") {
+        notification.error({
+          message: "Thông báo",
+          description: "Email đã tồn tại",
         });
+      } else if (!response) {
+        notification.error({
+          message: "Thông báo",
+          description: "Đăng ký thất bại",
+        });
+      } else {
+        notification.success({
+          message: "Thông báo",
+          description: "Đăng kí thành công",
+        });
+        setTimeout(() => history.push("/login"), 1000);
+      }
     } catch (error) {
-      throw error;
+      notification.error({
+        message: "Lỗi",
+        description: "Có lỗi xảy ra. Vui lòng thử lại sau!",
+      });
     }
   };
+
   return (
-    <div>
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-green-500 to-green-600">
-        <div id="wrapper">
-          <Card id="dialog" bordered={false}>
-            <Form
-              style={{ width: 400, marginBottom: 8 }}
-              name="normal_login"
-              className="loginform"
-              initialValues={{
-                remember: true,
-              }}
-              onFinish={onFinish}
+    <div
+      className="register-page bg-cover bg-center min-h-screen flex items-center justify-center"
+      style={{
+        backgroundImage:
+          "url('https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/474088WIe/background-ke-day-sach_074614605.jpg')",
+      }}
+    >
+      <div className="register-container max-w-md w-full bg-white p-6 rounded-lg shadow-lg">
+        <Card className="register-card border-0">
+          <Title level={3} className="register-title text-center text-gray-800">
+            Đăng Kí Tài Khoản
+          </Title>
+          <Text
+            type="secondary"
+            className="register-description block text-center mb-6 text-gray-600"
+          >
+            Vui lòng điền thông tin bên dưới để tạo tài khoản mới.
+          </Text>
+          <Form
+            name="register"
+            layout="vertical"
+            className="register-form"
+            onFinish={onFinish}
+          >
+            <Form.Item
+              name="username"
+              label="Tên hiển thị"
+              rules={[
+                { required: true, message: "Vui lòng nhập tên hiển thị!" },
+              ]}
             >
-              <Form.Item style={{ marginBottom: 3 }}>
-                <Divider
-                  style={{ marginBottom: 5, fontSize: 19 }}
-                  orientation="center"
-                >
-                  Book Garden
-                </Divider>
-              </Form.Item>
-              <Form.Item style={{ marginBottom: 16 }}>
-                <p className="text">Đăng Kí Tài Khoản Khách Hàng</p>
-              </Form.Item>
-
-              <Form.Item
-                style={{ marginBottom: 20 }}
-                name="username"
-                rules={[
-                  {
-                    required: true,
-                    message: "Vui lòng nhập tên hiển thị!",
-                  },
-                ]}
+              <Input
+                prefix={<UserOutlined />}
+                placeholder="Tên hiển thị"
+                size="large"
+                className="rounded-md"
+              />
+            </Form.Item>
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                { required: true, message: "Vui lòng nhập email!" },
+                { type: "email", message: "Email không hợp lệ!" },
+              ]}
+            >
+              <Input
+                prefix={<MailOutlined />}
+                placeholder="Email"
+                size="large"
+                className="rounded-md"
+              />
+            </Form.Item>
+            <Form.Item
+              name="password"
+              label="Mật khẩu"
+              rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Mật khẩu"
+                size="large"
+                className="rounded-md"
+              />
+            </Form.Item>
+            <Form.Item
+              name="phoneNo"
+              label="Số điện thoại"
+              rules={[
+                { required: true, message: "Vui lòng nhập số điện thoại!" },
+                {
+                  pattern: /^[0-9]{10,15}$/,
+                  message: "Số điện thoại không hợp lệ!",
+                },
+              ]}
+            >
+              <Input
+                prefix={<PhoneOutlined />}
+                placeholder="Số điện thoại"
+                size="large"
+                className="rounded-md"
+              />
+            </Form.Item>
+            <Form.Item style={{ marginTop: 20 }}>
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md"
+                type="primary"
+                htmlType="submit"
               >
-                <Input
-                  prefix={<UserOutlined className="siteformitemicon" />}
-                  placeholder="Tên hiển thị"
-                />
-              </Form.Item>
-
-              <Form.Item
-                style={{ marginBottom: 20 }}
-                name="password"
-                rules={[
-                  {
-                    required: true,
-                    message: "Vui lòng nhập mật khẩu!",
-                  },
-                ]}
-              >
-                <Input
-                  prefix={<LockOutlined className="siteformitemicon" />}
-                  type="password"
-                  placeholder="Mật khẩu"
-                />
-              </Form.Item>
-
-              <Form.Item
-                style={{ marginBottom: 20 }}
-                name="email"
-                rules={[
-                  {
-                    required: true,
-                    whitespace: true,
-                    message: "Vui lòng nhập email!",
-                  },
-                  {
-                    type: "email",
-                    message: "Email không hợp lệ!",
-                  },
-                ]}
-              >
-                <Input
-                  prefix={<MailOutlined className="siteformitemicon" />}
-                  placeholder="Email"
-                />
-              </Form.Item>
-
-              <Form.Item
-                style={{ marginBottom: 20 }}
-                name="phoneNo"
-                rules={[
-                  {
-                    required: true,
-                    whitespace: true,
-                    message: "Vui lòng nhập số điện thoại!",
-                  },
-                  {
-                    pattern: new RegExp(/^[0-9]{10,15}$/g),
-                    message:
-                      "Số điện thoại không hợp lệ, vui lòng kiểm tra lại!",
-                  },
-                ]}
-              >
-                <Input
-                  prefix={<PhoneOutlined className="siteformitemicon" />}
-                  placeholder="Số điện thoại"
-                />
-              </Form.Item>
-
-              <Form.Item style={{ marginBottom: 18 }}>
-                <Button
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md"
-                  type="primary"
-                  htmlType="submit"
-                >
-                  Đăng Kí
-                </Button>
-              </Form.Item>
-              <div className="link-login">
+                Đăng Kí
+              </Button>
+            </Form.Item>
+            <div className="register-footer text-center mt-4">
+              <Text className="text-gray-600">
                 Đã có tài khoản?{" "}
-                <Link className="link" to="/login">
+                <Link to="/login" className="register-login-link text-blue-600">
                   Đăng nhập
                 </Link>
-              </div>
-            </Form>
-          </Card>
-        </div>
+              </Text>
+            </div>
+          </Form>
+        </Card>
       </div>
     </div>
   );
