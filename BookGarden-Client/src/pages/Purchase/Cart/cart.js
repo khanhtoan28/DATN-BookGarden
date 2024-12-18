@@ -88,6 +88,7 @@ const Cart = () => {
         console.error("Lỗi khi gọi API:", error);
       });
   };
+
   const handleDelete = (productId) => {
     // Lọc lại giỏ hàng
     const updatedCart = productDetail.filter(
