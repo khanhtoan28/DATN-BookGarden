@@ -1,26 +1,14 @@
 import React, { useState, useEffect } from "react";
 import "./orderDetail.css";
 import {
-  Col,
-  Row,
   Typography,
   Spin,
-  Button,
-  Card,
-  Badge,
   Empty,
-  Input,
-  Space,
   Form,
-  Pagination,
   Modal,
-  Popconfirm,
-  notification,
   BackTop,
-  Tag,
   Breadcrumb,
   Select,
-  Table,
 } from "antd";
 import {
   DeleteOutlined,
@@ -52,77 +40,6 @@ const OrderDetail = () => {
 
   const history = useHistory();
 
-  const showModal = () => {
-    setOpenModalCreate(true);
-  };
-
-  const handleOkUser = async (values) => {
-    setLoading(true);
-    try {
-      const categoryList = {
-        name: values.name,
-        description: values.description,
-        slug: values.slug,
-      };
-      await axiosClient.post("/category", categoryList).then((response) => {
-        if (response === undefined) {
-          notification["error"]({
-            message: `Thông báo`,
-            description: "Tạo danh mục thất bại",
-          });
-        } else {
-          notification["success"]({
-            message: `Thông báo`,
-            description: "Tạo danh mục thành công",
-          });
-          setOpenModalCreate(false);
-          handleCategoryList();
-        }
-      });
-      setLoading(false);
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const handleUpdateOrder = async (values) => {
-    console.log(values);
-    setLoading(true);
-    try {
-      const categoryList = {
-        description: values.description,
-        status: values.status,
-      };
-      await axiosClient.put("/order/" + id, categoryList).then((response) => {
-        if (response === undefined) {
-          notification["error"]({
-            message: `Thông báo`,
-            description: "Cập nhật thất bại",
-          });
-        } else {
-          notification["success"]({
-            message: `Thông báo`,
-            description: "Cập nhật thành công",
-          });
-          setOpenModalUpdate(false);
-          handleCategoryList();
-        }
-      });
-      setLoading(false);
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const handleCancel = (type) => {
-    if (type === "create") {
-      setOpenModalCreate(false);
-    } else {
-      setOpenModalUpdate(false);
-    }
-    console.log("Clicked cancel button");
-  };
-
   const handleCategoryList = async () => {
     try {
       await orderApi.getListOrder({ page: 1, limit: 10000 }).then((res) => {
@@ -135,180 +52,9 @@ const OrderDetail = () => {
     }
   };
 
-  const handleDeleteCategory = async (id) => {
-    setLoading(true);
-    try {
-      await orderApi.deleteOrder(id).then((response) => {
-        if (response === undefined) {
-          notification["error"]({
-            message: `Thông báo`,
-            description: "Xóa danh mục thất bại",
-          });
-          setLoading(false);
-        } else {
-          notification["success"]({
-            message: `Thông báo`,
-            description: "Xóa danh mục thành công",
-          });
-          setCurrentPage(1);
-          handleCategoryList();
-          setLoading(false);
-        }
-      });
-    } catch (error) {
-      console.log("Failed to fetch event list:" + error);
-    }
-  };
-
-  const handleDetailView = (id) => {
-    history.push("/category-detail/" + id);
-  };
-
-  const handleEditOrder = (id) => {
-    setOpenModalUpdate(true);
-    (async () => {
-      try {
-        const response = await orderApi.getDetailOrder(id);
-        console.log(response);
-        form2.setFieldsValue({
-          status: response.status,
-          address: response.address,
-          description: response.description,
-          orderTotal: response.orderTotal,
-          products: response.products,
-          user: response.user,
-          billing: response.billing,
-        });
-        console.log(form2);
-        setLoading(false);
-      } catch (error) {
-        throw error;
-      }
-    })();
-  };
-
-  const handleFilter = async (name) => {
-    try {
-      const res = await orderApi.searchOrder(name);
-      setTotalList(res.totalDocs);
-      setOrder(res.data.docs);
-    } catch (error) {
-      console.log("search to fetch category list:" + error);
-    }
-  };
-
   function NoData() {
     return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />;
   }
-
-  const columns = [
-    {
-      title: "ID",
-      key: "index",
-      render: (text, record, index) => index + 1,
-    },
-    {
-      title: "Tên",
-      dataIndex: "user",
-      key: "user",
-      render: (text, record) => <a>{text.username}</a>,
-    },
-    {
-      title: "Email",
-      dataIndex: "user",
-      key: "user",
-      render: (text, record) => <a>{text.email}</a>,
-    },
-    {
-      title: "Tổng tiền",
-      dataIndex: "orderTotal",
-      key: "orderTotal",
-      render: (text) => (
-        <a>
-          {text?.toLocaleString("vi", { style: "currency", currency: "VND" })}
-        </a>
-      ),
-    },
-    {
-      title: "Hình thức thanh toán",
-      dataIndex: "billing",
-      key: "billing",
-    },
-    {
-      title: "Địa chỉ",
-      dataIndex: "address",
-      key: "address",
-    },
-    {
-      title: "Trạng thái",
-      key: "status",
-      dataIndex: "status",
-      render: (slugs) => (
-        <span>
-          {slugs === "rejected" ? (
-            <Tag style={{ width: 95, textAlign: "center" }} color="red">
-              Đã hủy
-            </Tag>
-          ) : slugs === "approved" ? (
-            <Tag
-              style={{ width: 95, textAlign: "center" }}
-              color="geekblue"
-              key={slugs}
-            >
-              Vận chuyển
-            </Tag>
-          ) : slugs === "final" ? (
-            <Tag color="green" style={{ width: 95, textAlign: "center" }}>
-              Đã giao
-            </Tag>
-          ) : (
-            <Tag color="blue" style={{ width: 95, textAlign: "center" }}>
-              Đợi xác nhận
-            </Tag>
-          )}
-        </span>
-      ),
-    },
-    {
-      title: "Mô tả",
-      dataIndex: "description",
-      key: "description",
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: (text, record) => (
-        <div>
-          <Row>
-            <Button
-              size="small"
-              icon={<EditOutlined />}
-              style={{ width: 150, borderRadius: 15, height: 30 }}
-              onClick={() => handleEditOrder(record._id)}
-            >
-              {"Chỉnh sửa"}
-            </Button>
-            <div style={{ marginLeft: 10 }}>
-              <Popconfirm
-                title="Bạn có chắc chắn xóa đơn hàng này?"
-                onConfirm={() => handleDeleteCategory(record._id)}
-                okText="Yes"
-                cancelText="No"
-              >
-                <Button
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  style={{ width: 150, borderRadius: 15, height: 30 }}
-                >
-                  {"Xóa"}
-                </Button>
-              </Popconfirm>
-            </div>
-          </Row>
-        </div>
-      ),
-    },
-  ];
 
   useEffect(() => {
     (async () => {

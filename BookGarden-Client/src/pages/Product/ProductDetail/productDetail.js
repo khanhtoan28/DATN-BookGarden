@@ -1,19 +1,14 @@
 import {
-  Avatar,
   Breadcrumb,
-  Button,
   Card,
   Carousel,
   Col,
   Form,
   Input,
-  List,
-  Modal,
   Rate,
   Row,
   Spin,
   message,
-  notification,
 } from "antd";
 import { PlayCircleOutlined, PauseCircleOutlined } from "@ant-design/icons";
 import Paragraph from "antd/lib/typography/Paragraph";
@@ -24,7 +19,6 @@ import productApi from "../../../apis/productApi";
 import triangleTopRight from "../../../assets/icon/Triangle-Top-Right.svg";
 import { numberWithCommas } from "../../../utils/common";
 import "react-h5-audio-player/lib/styles.css";
-
 import "./productDetail.css";
 
 const { TextArea } = Input;
@@ -41,64 +35,92 @@ const ProductDetail = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 
-
   const addCart = (product) => {
-    console.log(product);
+    if (product.stock === 0) {
+      message.warning("Sản phẩm đã hết hàng");
+      return;
+    }
+
     const existingItems = JSON.parse(localStorage.getItem("cart")) || [];
-    let updatedItems;
     const existingItemIndex = existingItems.findIndex(
       (item) => item._id === product._id
     );
+
+    let updatedItems;
+    let isMaxStock = false;
+
     if (existingItemIndex !== -1) {
-      // If product already exists in the cart, increase its stock
       updatedItems = existingItems.map((item, index) => {
         if (index === existingItemIndex) {
-          return {
-            ...item,
-            stock: item.stock + 1,
-          };
+          if (item.stock >= product.stock) {
+            message.warning("Không thể thêm quá số lượng tồn kho");
+            isMaxStock = true;
+            return item;
+          }
+          return { ...item, stock: item.stock + 1 };
         }
         return item;
       });
     } else {
-      // If product does not exist in the cart, add it to the cart
       updatedItems = [...existingItems, { ...product, stock: 1 }];
     }
-    console.log(updatedItems.length);
+
+    if (isMaxStock) return; // Nếu đã đạt tối đa, thoát khỏi hàm
+
     setCartLength(updatedItems.length);
     localStorage.setItem("cart", JSON.stringify(updatedItems));
     localStorage.setItem("cartLength", updatedItems.length);
-    window.location.reload(true);
+
+    // Hiển thị thông báo thành công
+    message.success("Thêm sản phẩm vào giỏ hàng thành công!");
+
+    // Trì hoãn reload trang để thông báo hiển thị trước
+    setTimeout(() => {
+      window.location.reload();
+    }, 500); // Trì hoãn reload trong 1 giây
   };
 
   const paymentCard = (product) => {
-    console.log(product);
+    if (product.stock === 0) {
+      message.warning("Sản phẩm đã hết hàng");
+      return;
+    }
+
     const existingItems = JSON.parse(localStorage.getItem("cart")) || [];
     let updatedItems;
     const existingItemIndex = existingItems.findIndex(
       (item) => item._id === product._id
     );
+
     if (existingItemIndex !== -1) {
-      // If product already exists in the cart, increase its stock
+      // Nếu sản phẩm đã có trong giỏ hàng
+      if (existingItems[existingItemIndex].stock >= product.stock) {
+        message.warning("Không thể thêm quá số lượng tồn kho");
+        return;
+      }
       updatedItems = existingItems.map((item, index) => {
         if (index === existingItemIndex) {
-          return {
-            ...item,
-            stock: item.stock + 1,
-          };
+          return { ...item, stock: item.stock + 1 };
         }
         return item;
       });
     } else {
-      // If product does not exist in the cart, add it to the cart
+      // Nếu sản phẩm chưa có trong giỏ hàng
       updatedItems = [...existingItems, { ...product, stock: 1 }];
     }
-    console.log(updatedItems.length);
-    setCartLength(updatedItems.length);
+
+    // Lưu vào localStorage
     localStorage.setItem("cart", JSON.stringify(updatedItems));
     localStorage.setItem("cartLength", updatedItems.length);
-    history.push("/cart");
+
+    // Hiển thị thông báo
+
+    // Điều hướng đến trang giỏ hàng
+    setTimeout(() => {
+      history.push("/cart");
+    }, 300); // Trì hoãn 300ms để hiển thị thông báo trước khi chuyển trang
   };
+
   const handleReadMore = (id) => {
     console.log(id);
     history.push("/product-detail/" + id);
@@ -158,22 +180,21 @@ const ProductDetail = () => {
       try {
         const local = localStorage.getItem("user");
         const user = JSON.parse(local);
-        setUser (user);
-  
+        setUser(user);
+
         const productResponse = await productApi.getDetailProduct(id);
         console.log("Product Response:", productResponse);
-  
-        
+
         if (productResponse && productResponse.product) {
           setProductDetail(productResponse.product);
         } else {
           console.error("Product data is not available in the response.");
         }
-  
+
         const recommendResponse = await productApi.getRecommendProduct(id);
-        console.log("Recommendations Response:", recommendResponse); 
+        console.log("Recommendations Response:", recommendResponse);
         setRecommend(recommendResponse?.recommendations);
-  
+
         setLoading(false);
       } catch (error) {
         console.log("Failed to fetch event detail:", error);
@@ -197,7 +218,7 @@ const ProductDetail = () => {
                   {/* <HomeOutlined /> */}
                   <span>Trang chủ</span>
                 </Breadcrumb.Item>
-                <Breadcrumb.Item href="http://localhost:3500/product-list/643cd88879b4192efedda4e6">
+                <Breadcrumb.Item href="http://localhost:3500/product-list">
                   {/* <AuditOutlined /> */}
                   <span>Sản phẩm</span>
                 </Breadcrumb.Item>
@@ -431,191 +452,6 @@ const ProductDetail = () => {
                 dangerouslySetInnerHTML={{ __html: productDetail.description }}
               ></div>
             </div>
-
-            {/* <Row gutter={12} style={{ marginTop: 20 }}>
-              <Col span={16}>
-                <Card className="card_total" bordered={false}>
-                  <div className="card_number">
-                    <div>
-                      <div className="number_total">
-                        {productDetail.categoryTotal}
-                      </div>
-                      <div className="title_total">
-                        Đánh giá & nhận xét "{productDetail.name}"
-                      </div>
-                      <div class="review">
-                        <div class="policy-review">
-                          <div class="policy__list">
-                            <Row gutter={12}>
-                              <Col span={8}>
-                                <div className="comment_total">
-                                  <p class="title">{avgRating}/5</p>
-                                  <Rate disabled value={avgRating} />
-                                  <p>
-                                    <strong>{reviews.length}</strong> đánh giá
-                                    và nhận xét
-                                  </p>
-                                </div>
-                              </Col>
-                              <Col span={16}>
-                                <div className="progress_comment">
-                                  <div class="is-active">
-                                    <div>5</div>
-                                    <div>
-                                      <svg
-                                        height="15"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 576 512"
-                                      >
-                                        <path d="M381.2 150.3L524.9 171.5C536.8 173.2 546.8 181.6 550.6 193.1C554.4 204.7 551.3 217.3 542.7 225.9L438.5 328.1L463.1 474.7C465.1 486.7 460.2 498.9 450.2 506C440.3 513.1 427.2 514 416.5 508.3L288.1 439.8L159.8 508.3C149 514 135.9 513.1 126 506C116.1 498.9 111.1 486.7 113.2 474.7L137.8 328.1L33.58 225.9C24.97 217.3 21.91 204.7 25.69 193.1C29.46 181.6 39.43 173.2 51.42 171.5L195 150.3L259.4 17.97C264.7 6.954 275.9-.0391 288.1-.0391C300.4-.0391 311.6 6.954 316.9 17.97L381.2 150.3z"></path>
-                                      </svg>
-                                    </div>
-                                  </div>
-                                  Đánh giá 5 sao gồm có:
-                                  <span className="review-count">
-                                    {reviewsCount[4] || 0}
-                                  </span>
-                                </div>
-                                <div className="progress_comment">
-                                  <div class="is-active">
-                                    <div>4</div>
-                                    <div>
-                                      <svg
-                                        height="15"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 576 512"
-                                      >
-                                        <path d="M381.2 150.3L524.9 171.5C536.8 173.2 546.8 181.6 550.6 193.1C554.4 204.7 551.3 217.3 542.7 225.9L438.5 328.1L463.1 474.7C465.1 486.7 460.2 498.9 450.2 506C440.3 513.1 427.2 514 416.5 508.3L288.1 439.8L159.8 508.3C149 514 135.9 513.1 126 506C116.1 498.9 111.1 486.7 113.2 474.7L137.8 328.1L33.58 225.9C24.97 217.3 21.91 204.7 25.69 193.1C29.46 181.6 39.43 173.2 51.42 171.5L195 150.3L259.4 17.97C264.7 6.954 275.9-.0391 288.1-.0391C300.4-.0391 311.6 6.954 316.9 17.97L381.2 150.3z"></path>
-                                      </svg>
-                                    </div>
-                                  </div>
-                                  Đánh giá 4 sao gồm có:
-                                  <span className="review-count">
-                                    {reviewsCount[3] || 0}
-                                  </span>
-                                </div>
-                                <div className="progress_comment">
-                                  <div class="is-active">
-                                    <div>3</div>
-                                    <div>
-                                      <svg
-                                        height="15"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 576 512"
-                                      >
-                                        <path d="M381.2 150.3L524.9 171.5C536.8 173.2 546.8 181.6 550.6 193.1C554.4 204.7 551.3 217.3 542.7 225.9L438.5 328.1L463.1 474.7C465.1 486.7 460.2 498.9 450.2 506C440.3 513.1 427.2 514 416.5 508.3L288.1 439.8L159.8 508.3C149 514 135.9 513.1 126 506C116.1 498.9 111.1 486.7 113.2 474.7L137.8 328.1L33.58 225.9C24.97 217.3 21.91 204.7 25.69 193.1C29.46 181.6 39.43 173.2 51.42 171.5L195 150.3L259.4 17.97C264.7 6.954 275.9-.0391 288.1-.0391C300.4-.0391 311.6 6.954 316.9 17.97L381.2 150.3z"></path>
-                                      </svg>
-                                    </div>
-                                  </div>
-                                  Đánh giá 3 sao gồm có:
-                                  <span className="review-count">
-                                    {reviewsCount[2] || 0}
-                                  </span>
-                                </div>
-                                <div className="progress_comment">
-                                  <div class="is-active">
-                                    <div>2</div>
-                                    <div>
-                                      <svg
-                                        height="15"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 576 512"
-                                      >
-                                        <path d="M381.2 150.3L524.9 171.5C536.8 173.2 546.8 181.6 550.6 193.1C554.4 204.7 551.3 217.3 542.7 225.9L438.5 328.1L463.1 474.7C465.1 486.7 460.2 498.9 450.2 506C440.3 513.1 427.2 514 416.5 508.3L288.1 439.8L159.8 508.3C149 514 135.9 513.1 126 506C116.1 498.9 111.1 486.7 113.2 474.7L137.8 328.1L33.58 225.9C24.97 217.3 21.91 204.7 25.69 193.1C29.46 181.6 39.43 173.2 51.42 171.5L195 150.3L259.4 17.97C264.7 6.954 275.9-.0391 288.1-.0391C300.4-.0391 311.6 6.954 316.9 17.97L381.2 150.3z"></path>
-                                      </svg>
-                                    </div>
-                                  </div>
-                                  Đánh giá 2 sao gồm có:
-                                  <span className="review-count">
-                                    {reviewsCount[1] || 0}
-                                  </span>
-                                </div>
-                                <div className="progress_comment">
-                                  <div class="is-active">
-                                    <div>1</div>
-                                    <div>
-                                      <svg
-                                        height="15"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 576 512"
-                                      >
-                                        <path d="M381.2 150.3L524.9 171.5C536.8 173.2 546.8 181.6 550.6 193.1C554.4 204.7 551.3 217.3 542.7 225.9L438.5 328.1L463.1 474.7C465.1 486.7 460.2 498.9 450.2 506C440.3 513.1 427.2 514 416.5 508.3L288.1 439.8L159.8 508.3C149 514 135.9 513.1 126 506C116.1 498.9 111.1 486.7 113.2 474.7L137.8 328.1L33.58 225.9C24.97 217.3 21.91 204.7 25.69 193.1C29.46 181.6 39.43 173.2 51.42 171.5L195 150.3L259.4 17.97C264.7 6.954 275.9-.0391 288.1-.0391C300.4-.0391 311.6 6.954 316.9 17.97L381.2 150.3z"></path>
-                                      </svg>
-                                    </div>
-                                  </div>
-                                  Đánh giá 1 sao gồm có:
-                                  <span className="review-count">
-                                    {reviewsCount[0] || 0}
-                                  </span>
-                                </div>
-                              </Col>
-                            </Row>
-                          </div>
-                        </div>
-                      </div>
-                      <p class="subtitle">Bạn đánh giá sao sản phẩm này</p>
-                      <div class="group_comment">
-                        <Button
-                          type="primary"
-                          className="button_comment"
-                          size={"large"}
-                          onClick={handleOpenModal}
-                          disabled={!user}
-                        >
-                          Đánh giá ngay
-                        </Button>
-                      </div>
-                      <Modal
-                        visible={visible2}
-                        onCancel={handleCloseModal}
-                        onOk={handleReviewSubmit}
-                        okText="Gửi đánh giá"
-                        cancelText="Hủy"
-                      >
-                        <h2>Đánh giá và bình luận</h2>
-                        <Rate
-                          value={rating}
-                          onChange={handleRateChange}
-                          style={{ marginBottom: 10 }}
-                        />
-                        <TextArea
-                          placeholder="Nhập bình luận của bạn"
-                          value={comment}
-                          onChange={handleCommentChange}
-                        ></TextArea>
-                      </Modal>
-                    </div>
-                    <div style={{ marginTop: 40 }}>
-                      <Card>
-                        <div style={{ padding: 20 }}>
-                          <List
-                            itemLayout="horizontal"
-                            dataSource={reviews}
-                            renderItem={(item, index) => (
-                              <List.Item>
-                                <List.Item.Meta
-                                  avatar={
-                                    <Avatar
-                                      src={`https://xsgames.co/randomusers/avatar.php?g=pixel&key=1`}
-                                    />
-                                  }
-                                  title={
-                                    <a href="https://ant.design">
-                                      {item?.user?.username}
-                                    </a>
-                                  }
-                                  description={item?.comment}
-                                />
-                              </List.Item>
-                            )}
-                          />
-                        </div>
-                      </Card>
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-            </Row> */}
 
             <div className="price" style={{ marginTop: 40 }}>
               <h1 className="product_name">Sản phẩm bạn có thể quan tâm</h1>

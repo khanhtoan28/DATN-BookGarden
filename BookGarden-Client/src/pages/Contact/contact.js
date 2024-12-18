@@ -1,45 +1,10 @@
-import { Button, Input, notification } from "antd";
-import React, { useState } from "react";
-import axiosClient from "../../apis/axiosClient";
+import { Button, Input } from "antd";
+import React from "react";
 import "./contact.css";
 
 const { TextArea } = Input;
 
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    full_name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axiosClient.post("/contacts", formData);
-      notification.success({
-        message: "Success",
-        description: "Contact created successfully",
-      });
-      setFormData({
-        full_name: "",
-        email: "",
-        subject: "",
-        message: "",
-      });
-    } catch (error) {
-      notification.error({
-        message: "Error",
-        description: "Failed to create contact",
-      });
-    }
-  };
-
   return (
     <div id="container" class="pt-5">
       <div
@@ -176,43 +141,19 @@ const Contact = () => {
             </div>
 
             <div class="col-lg-7">
-              <form onSubmit={handleSubmit}>
+              <form>
                 <div className="row">
                   <div className="col-md-6 mb-4">
-                    <Input
-                      type="text"
-                      name="full_name"
-                      value={formData.full_name}
-                      onChange={handleChange}
-                      placeholder="Họ tên"
-                    />
+                    <Input type="text" placeholder="Họ tên" />
                   </div>
                   <div className="col-md-6 mb-4">
-                    <Input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="Địa chỉ email"
-                    />
+                    <Input type="email" placeholder="Địa chỉ email" />
                   </div>
                   <div className="col-md-12 mb-4">
-                    <Input
-                      type="text"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      placeholder="Chủ đề"
-                    />
+                    <Input type="text" placeholder="Chủ đề" />
                   </div>
                   <div className="col-md-12 mb-4">
-                    <TextArea
-                      rows={4}
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      placeholder="Nội dung"
-                    />
+                    <TextArea rows={4} placeholder="Nội dung" />
                   </div>
                   <div className="col-md-12">
                     <Button type="primary" htmlType="submit">
