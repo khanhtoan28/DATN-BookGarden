@@ -165,7 +165,7 @@ const Login = () => {
           </Button>,
           <Button
             key="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md"
+            className="bg-blue-600 hover:bg-blue-700 text-back font-bold rounded-md"
             onClick={handleForgotPasswordSubmit}
           >
             Gửi đường dẫn đổi mật khẩu
