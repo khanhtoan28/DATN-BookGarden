@@ -470,7 +470,7 @@ const Pay = () => {
       setLoading(true);
       const dataPayload = {
         service_type_id: 2,
-        from_district_id: 1442,
+        from_district_id: 1542,
         from_ward_code: "21211",
         to_district_id: idHuyen2,
         to_ward_code: cc,
@@ -496,8 +496,8 @@ const Pay = () => {
         dataPayload,
         {
           headers: {
-            token: "11acfacb-a8a1-11ef-a094-f28ffa88cdab",
-            shop_id: "5472459",
+            token: "33224be7-ab31-11ef-a89d-dab02cbaab48",
+            shop_id: "5479564",
           },
         }
       );
