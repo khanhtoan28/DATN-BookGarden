@@ -5,7 +5,6 @@ const mongoose = require("mongoose");
 const app = express();
 const DB_MONGO = require("./app/config/db.config");
 const _CONST = require("./app/config/constant");
-// const { sendEmailNotification } = require('./app/kafka/consumer');
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 //router

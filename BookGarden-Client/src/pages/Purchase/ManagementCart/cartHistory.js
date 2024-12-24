@@ -16,7 +16,14 @@ import axiosClient from "../../../apis/axiosClient";
 import eventApi from "../../../apis/eventApi";
 import productApi from "../../../apis/productApi";
 import "./cartHistory.css";
-
+import {
+  FaTimes,
+  FaTruck,
+  FaCheckCircle,
+  FaBox,
+  FaClock,
+  FaCheck,
+} from "react-icons/fa";
 const CartHistory = () => {
   const [orderList, setOrderList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +128,7 @@ const CartHistory = () => {
         if (order.status === "shipped successfully") {
           setTimeout(() => {
             handleAutoCompleteOrder(order._id);
-          }, 30000); // 30 giây
+          }, 60000); // 60 giây
         }
       });
     }
@@ -200,28 +207,29 @@ const CartHistory = () => {
       render: (slugs) => (
         <span className="flex justify-center items-center w-full text-center">
           {slugs === "rejected" ? (
-            <div className="status bg-red-500 text-white py-1 px-4 rounded-full font-semibold">
-              Đã hủy
+            <div className="status bg-red-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+              <FaTimes className="inline-block" /> <span>Đã hủy</span>
             </div>
           ) : slugs === "shipping" ? (
-            <div className="status bg-blue-500 text-white py-1 px-4 rounded-full font-semibold">
-              Đang vận chuyển
+            <div className="status bg-blue-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+              <FaTruck className="inline-block" /> <span>Đang vận chuyển</span>
             </div>
           ) : slugs === "shipped successfully" ? (
-            <div className="status bg-indigo-500 text-white py-1 px-4 rounded-full font-semibold">
-              Đã giao
+            <div className="status bg-indigo-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+              <FaCheckCircle className="inline-block" /> <span>Đã giao</span>
             </div>
           ) : slugs === "final" ? (
-            <div className="status bg-green-500 text-white py-1 px-4 rounded-full font-semibold">
-              Hoàn thành
+            <div className="status bg-green-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+              <FaCheck className="inline-block" /> <span>Hoàn thành</span>
             </div>
           ) : slugs === "confirmed" ? (
-            <div className="status bg-blue-600 text-white py-1 px-4 rounded-full font-semibold">
-              Đã xác nhận
+            <div className="status bg-blue-600 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+              <FaCheckCircle className="inline-block" />{" "}
+              <span>Đã xác nhận</span>
             </div>
           ) : (
-            <div className="status bg-gray-500 text-white py-1 px-4 rounded-full font-semibold">
-              Đợi xác nhận
+            <div className="status bg-gray-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+              <FaClock className="inline-block" /> <span>Đợi xác nhận</span>
             </div>
           )}
         </span>
@@ -281,7 +289,7 @@ const CartHistory = () => {
           )}
 
           <button
-            className={`px-4 py-2 text-white font-semibold rounded mt-3 ${
+            className={`px-4 py-2 text-white font-semibold rounded mt-3 whitespace-nowrap ${
               record.status === "pending" || record.status === "confirmed"
                 ? "bg-red-500 hover:bg-red-600"
                 : "bg-gray-300 cursor-not-allowed"
