@@ -5,7 +5,6 @@ import {
   Card,
   Col,
   Divider,
-  Form,
   InputNumber,
   Layout,
   Row,
@@ -14,6 +13,7 @@ import {
   Table,
   Modal,
   message,
+  Checkbox,
 } from "antd";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
@@ -26,11 +26,24 @@ const Cart = () => {
   const [loading, setLoading] = useState(true);
   const [cartLength, setCartLength] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
-  const [form] = Form.useForm();
   const history = useHistory();
-
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const handlePay = () => {
-    history.push("/pay");
+    if (selectedProducts.length === 0) {
+      message.error("Vui lòng chọn ít nhất một sản phẩm để thanh toán.");
+      return;
+    }
+
+    // Lọc các sản phẩm đã chọn từ giỏ hàng
+    const selectedCartItems = productDetail.filter((item) =>
+      selectedProducts.includes(item._id)
+    );
+
+    // Chuyển hướng đến trang thanh toán với danh sách sản phẩm đã chọn
+    history.push({
+      pathname: "/pay",
+      state: { selectedProducts: selectedCartItems }, // Gửi danh sách sản phẩm đã chọn
+    });
   };
 
   const deleteCart = () => {
@@ -62,16 +75,19 @@ const Cart = () => {
         // Cập nhật giỏ hàng nếu hợp lệ
         const updatedCart = productDetail.map((item) => {
           if (item._id === productId) {
-            item.stock = newStock;
-            item.total = item.salePrice * newStock;
+            item.stock = newStock; // Cập nhật số lượng cho sản phẩm đã chọn
+            item.total = item.salePrice * newStock; // Cập nhật tổng cho sản phẩm
           }
           return item;
         });
 
+        // Tính lại tổng giá trị giỏ hàng chỉ cho các sản phẩm đã chọn
         const total = updatedCart.reduce(
-          (acc, item) => acc + item.stock * item.salePrice,
+          (acc, item) =>
+            acc + (selectedProducts.includes(item._id) ? item.total : 0),
           0
         );
+
         setCartTotal(total);
         localStorage.setItem("cart", JSON.stringify(updatedCart));
         setProductDetail(updatedCart);
@@ -80,7 +96,6 @@ const Cart = () => {
         console.error("Lỗi khi gọi API:", error);
       });
   };
-
   const handleDelete = (productId) => {
     // Lọc lại giỏ hàng
     const updatedCart = productDetail.filter(
@@ -127,8 +142,61 @@ const Cart = () => {
       onOk: deleteCart,
     });
   };
+  const handleSelectProduct = (productId) => {
+    setSelectedProducts((prevSelected) => {
+      const newSelected = prevSelected.includes(productId)
+        ? prevSelected.filter((id) => id !== productId)
+        : [...prevSelected, productId];
 
+      // Lưu trạng thái vào localStorage
+      localStorage.setItem("selectedProducts", JSON.stringify(newSelected));
+
+      // Tính lại tổng tiền khi chọn hoặc bỏ chọn sản phẩm
+      const total = productDetail.reduce(
+        (acc, item) =>
+          acc +
+          (newSelected.includes(item._id)
+            ? (item.salePrice || 0) * (item.stock || 1) // Đặt giá trị mặc định
+            : 0),
+        0
+      );
+      setCartTotal(total);
+
+      setCartTotal(total);
+      return newSelected;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProducts.length === productDetail.length) {
+      // Nếu tất cả sản phẩm đã được chọn, bỏ chọn tất cả
+      setSelectedProducts([]);
+      setCartTotal(0); // Đặt tổng tiền về 0 khi bỏ chọn
+      localStorage.removeItem("selectedProducts"); // Xóa khỏi localStorage
+    } else {
+      // Nếu chưa chọn tất cả, chọn tất cả
+      const allProductIds = productDetail.map((item) => item._id);
+      setSelectedProducts(allProductIds);
+
+      // Tính tổng tiền cho tất cả sản phẩm
+      const total = productDetail.reduce((acc, item) => acc + item.total, 0);
+      setCartTotal(total);
+
+      // Lưu trạng thái vào localStorage
+      localStorage.setItem("selectedProducts", JSON.stringify(allProductIds));
+    }
+  };
   const columns = [
+    {
+      title: "Chọn",
+      key: "select",
+      render: (text, record) => (
+        <Checkbox
+          checked={selectedProducts.includes(record._id)}
+          onChange={() => handleSelectProduct(record._id)}
+        />
+      ),
+    },
     {
       title: "ID",
       key: "index",
@@ -166,7 +234,7 @@ const Cart = () => {
       render: (text, record) => (
         <InputNumber
           min={1}
-          max={record?.availableStock} // Giới hạn số lượng theo tồn kho
+          max={record?.availableStock}
           defaultValue={text}
           onChange={(value) => updateStock(record._id, value)}
         />
@@ -200,37 +268,29 @@ const Cart = () => {
 
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    setProductDetail(cart);
-    setCartLength(cart.length);
+    const updatedCart = cart.map((item) => ({
+      ...item,
+      stock: item.stock || 1, // Đặt giá trị mặc định là 1 nếu thiếu
+      salePrice: item.salePrice || 0, // Đặt giá trị mặc định là 0 nếu thiếu
+      total: (item.salePrice || 0) * (item.stock || 1), // Tính total với giá trị mặc định
+    }));
 
-    const productIds = cart.map((item) => item._id);
+    setProductDetail(updatedCart);
+    setCartLength(updatedCart.length);
 
-    Promise.all(productIds.map((id) => productApi.getDetailProduct(id)))
-      .then((responses) => {
-        const updatedCart = cart.map((item) => {
-          const productDetail = responses.find(
-            (response) => response._id === item._id
-          );
-          if (productDetail) {
-            item.stock = productDetail?.stock || 0;
-            item.salePrice = productDetail?.salePrice || 0;
-          }
-          return item;
-        });
+    // Tải trạng thái selectedProducts từ localStorage
+    const savedSelectedProducts =
+      JSON.parse(localStorage.getItem("selectedProducts")) || [];
+    setSelectedProducts(savedSelectedProducts);
 
-        const total = updatedCart.reduce(
-          (acc, item) => acc + item.stock * item.salePrice,
-          0
-        );
-        setCartTotal(total);
-        setProductDetail(updatedCart);
-      })
-      .catch((error) => {
-        console.error("Lỗi khi tải thông tin giỏ hàng:", error);
-      });
+    const total = updatedCart.reduce(
+      (acc, item) =>
+        acc + (savedSelectedProducts.includes(item._id) ? item.total : 0),
+      0
+    );
 
+    setCartTotal(total);
     setLoading(false);
-    window.scrollTo(0, 0);
   }, []);
 
   const handleRowClick = (record) => {
@@ -238,7 +298,7 @@ const Cart = () => {
   };
 
   const handleToHomeProduct = () => {
-    history.push("/product-list"); // Chuyển hướng về trang home
+    history.push("/product-list");
   };
 
   return (
@@ -257,15 +317,14 @@ const Cart = () => {
                   </Breadcrumb>
                   <hr />
                   <br />
-                  {/* Hiển thị thông báo nếu giỏ hàng trống */}
                   {cartLength === 0 ? (
-                    <div className=" text-center">
+                    <div className="text-center">
                       <img
                         src="https://maydongphucyte.com/default/template/img/cart-empty.png"
-                        className="mx-auto " // Giảm margin dưới của ảnh để ảnh bé lên trên
+                        className="mx-auto"
                         alt="Giỏ hàng trống"
                       />
-                      <h4 className="text-gray-500 ">
+                      <h4 className="text-gray-500">
                         Chưa có sản phẩm trong giỏ hàng của bạn.
                       </h4>
                       <button
@@ -292,6 +351,15 @@ const Cart = () => {
                           >
                             <span>Xóa tất cả</span>
                           </Button>
+                          <Button
+                            type="default"
+                            style={{ float: "right", marginRight: "10px" }}
+                            onClick={handleSelectAll} // Gọi hàm chọn tất cả
+                          >
+                            {selectedProducts.length === productDetail.length
+                              ? "Bỏ chọn tất cả"
+                              : "Chọn tất cả"}
+                          </Button>
                         </Col>
                       </Row>
                       <br />
@@ -308,7 +376,7 @@ const Cart = () => {
                           <h6>Tổng {cartLength} sản phẩm</h6>
                           <Statistic
                             title="Tổng tiền (đã bao gồm VAT)."
-                            value={cartTotal}
+                            value={cartTotal || 0} // Giá trị mặc định là 0 nếu cartTotal không hợp lệ
                             precision={0}
                             formatter={(value) =>
                               `${value.toLocaleString("vi", {
@@ -317,11 +385,12 @@ const Cart = () => {
                               })}`
                             }
                           />
+
                           <Button
                             style={{ marginTop: 16 }}
                             type="primary"
                             onClick={handlePay}
-                            disabled={productDetail.length === 0}
+                            disabled={selectedProducts.length === 0}
                           >
                             Thanh toán ngay
                             <CreditCardOutlined style={{ fontSize: "20px" }} />
