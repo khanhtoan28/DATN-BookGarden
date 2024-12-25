@@ -20,9 +20,10 @@ import {
   FaTimes,
   FaTruck,
   FaCheckCircle,
-  FaBox,
   FaClock,
   FaCheck,
+  FaThumbsUp,
+  FaUndo,
 } from "react-icons/fa";
 const CartHistory = () => {
   const [orderList, setOrderList] = useState([]);
@@ -216,16 +217,15 @@ const CartHistory = () => {
             </div>
           ) : slugs === "shipped successfully" ? (
             <div className="status bg-indigo-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
-              <FaCheckCircle className="inline-block" /> <span>Đã giao</span>
+              <FaCheck className="inline-block" /> <span>Đã giao</span>
             </div>
           ) : slugs === "final" ? (
             <div className="status bg-green-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
-              <FaCheck className="inline-block" /> <span>Hoàn thành</span>
+              <FaCheckCircle className="inline-block" /> <span>Hoàn thành</span>
             </div>
           ) : slugs === "confirmed" ? (
             <div className="status bg-blue-600 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
-              <FaCheckCircle className="inline-block" />{" "}
-              <span>Đã xác nhận</span>
+              <FaThumbsUp className="inline-block" /> <span>Đã xác nhận</span>
             </div>
           ) : (
             <div className="status bg-gray-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
@@ -411,28 +411,44 @@ const CartHistory = () => {
       key: "status",
       render: (slugs) => {
         const statusStyles = {
-          finalcomplaint:
-            "bg-green-500 text-white py-1 px-4 rounded-full font-semibold", // Hoàn thành
-          pendingcomplaint:
-            "bg-gray-500 text-white py-1 px-4 rounded-full font-semibold", // Đang chờ
-          acceptcomplaint:
-            "bg-blue-500 text-white py-1 px-4 rounded-full font-semibold", // Đã duyệt
-          refundcomplaint:
-            "bg-yellow-500 text-white py-1 px-4 rounded-full font-semibold", // Đang hoàn trả
+          finalcomplaint: {
+            className:
+              "bg-green-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2",
+            icon: <FaCheckCircle />,
+            label: "Hoàn thành",
+          },
+          pendingcomplaint: {
+            className:
+              "bg-gray-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2",
+            icon: <FaClock />,
+            label: "Đang chờ",
+          },
+          acceptcomplaint: {
+            className:
+              "bg-blue-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2",
+            icon: <FaThumbsUp />,
+            label: "Đã duyệt",
+          },
+          refundcomplaint: {
+            className:
+              "bg-yellow-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2",
+            icon: <FaUndo />,
+            label: "Đang hoàn trả",
+          },
+        };
+
+        const status = statusStyles[slugs] || {
+          className:
+            "bg-gray-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2",
+          icon: <FaClock />,
+          label: "Không xác định",
         };
 
         return (
           <span className="flex justify-center items-center w-full text-center">
-            <div
-              className={
-                statusStyles[slugs] ||
-                "bg-gray-500 text-white py-1 px-4 rounded-full font-semibold"
-              }
-            >
-              {slugs === "finalcomplaint" && "Đã hoàn thành"}
-              {slugs === "pendingcomplaint" && "Đang chờ"}
-              {slugs === "acceptcomplaint" && "Đã duyệt"}
-              {slugs === "refundcomplaint" && "Đang hoàn trả"}
+            <div className={status.className}>
+              {status.icon}
+              <span>{status.label}</span>
             </div>
           </span>
         );
