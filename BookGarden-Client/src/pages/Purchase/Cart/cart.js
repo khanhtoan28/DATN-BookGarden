@@ -59,14 +59,6 @@ const Cart = () => {
           return;
         }
 
-        // Kiểm tra giới hạn tối đa
-        if (newStock > 100) {
-          message.error(
-            "Bạn chỉ được phép mua tối đa 100 sản phẩm cho mỗi mặt hàng."
-          );
-          return;
-        }
-
         // Cập nhật giỏ hàng nếu hợp lệ
         const updatedCart = productDetail.map((item) => {
           if (item._id === productId) {
