@@ -32,11 +32,11 @@ const Pay = () => {
   const [loading, setLoading] = useState(true);
   const [orderTotal, setOrderTotal] = useState([]);
   const [visible, setVisible] = useState(false);
-  const [dataForm, setDataForm] = useState([]);
   const location = useLocation();
+  const { selectedProducts } = location.state || { selectedProducts: [] }; // Lấy sản phẩm đã chọn từ state
   const queryParams = new URLSearchParams(location.search);
   const paymentId = queryParams.get("paymentId");
-  const [lengthForm, setLengthForm] = useState();
+  const [orderTotalPrice, setTotalPrice] = useState(0); // Khai báo useState cho totalPrice
   const [form] = Form.useForm();
   const [template_feedback, setTemplateFeedback] = useState();
   let { id } = useParams();
@@ -50,8 +50,16 @@ const Pay = () => {
 
   const accountCreate = async (values) => {
     // Tính toán tổng tiền (bao gồm phí ship)
-    const totalAmount = Number(totalPrice) + Number(totalFee);
-
+    const totalAmount = orderTotalPrice + totalFee;
+    const orderData = {
+      userId: userData._id,
+      address: values.address,
+      billing: values.billing,
+      description: values.description,
+      status: "pending",
+      products: selectedProducts, // Chỉ gửi sản phẩm đã chọn
+      orderTotal: totalAmount, // Tổng tiền đã tính
+    };
     if (values.billing === "vnpay") {
       try {
         // Lưu thông tin đơn hàng vào localStorage
@@ -63,7 +71,7 @@ const Pay = () => {
             billing: values.billing,
             description: values.description,
             status: "pending",
-            products: productDetail,
+            products: selectedProducts,
             orderTotal: totalAmount,
           })
         );
@@ -138,20 +146,12 @@ const Pay = () => {
           description: values.description,
           status: "pending",
           products: productDetail,
-          orderTotal: Number(totalPrice) + Number(totalFee),
+          orderTotal: Number(orderTotalPrice) + Number(totalFee),
         };
 
         console.log(formatData);
         await axiosClient.post("/order", formatData).then((response) => {
           console.log(response);
-          if (
-            response.error === "Insufficient stock for one or more products."
-          ) {
-            return notification["error"]({
-              message: `Thông báo`,
-              description: "Sản phẩm đã hết hàng!",
-            });
-          }
 
           if (response == undefined) {
             notification["error"]({
@@ -163,9 +163,23 @@ const Pay = () => {
               message: `Thông báo`,
               description: "Đặt hàng thành công",
             });
+            // Xóa sản phẩm đã chọn khỏi giỏ hàng
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+            console.log("Current Cart:", cart); // Kiểm tra giỏ hàng hiện tại
+            console.log("Selected Products:", selectedProducts); // Kiểm tra sản phẩm đã chọn
+
+            // Lọc giỏ hàng để chỉ giữ lại sản phẩm không nằm trong selectedProducts
+            const updatedCart = cart.filter(
+              (item) =>
+                !selectedProducts.some((selected) => selected._id === item._id)
+            );
+
+            console.log("Updated Cart:", updatedCart); // Kiểm tra giỏ hàng đã cập nhật
+
+            localStorage.setItem("cart", JSON.stringify(updatedCart)); // Cập nhật giỏ hàng
+
             form.resetFields();
             history.push("/final-pay");
-            localStorage.removeItem("cart");
             localStorage.removeItem("cartLength");
           }
         });
@@ -281,7 +295,7 @@ const Pay = () => {
         const defaultShippingFee = 39001; // Phí ship mặc định
 
         // Đảm bảo tổng tiền bao gồm phí ship
-        const totalAmount = Number(totalPrice) + defaultShippingFee;
+        const totalAmount = Number(orderTotalPrice) + defaultShippingFee;
 
         const formatData = {
           userId: currentUser._id,
@@ -289,7 +303,7 @@ const Pay = () => {
           billing: "paypal",
           description: description,
           status: "pending",
-          products: productDetail,
+          products: selectedProducts,
           orderTotal: totalAmount, // Lưu tổng số tiền bao gồm phí ship
           paymentId: paymentId, // Lưu paymentId
           payerId: PayerID, // Lưu PayerID
@@ -305,7 +319,6 @@ const Pay = () => {
           });
           form.resetFields();
           history.push("/final-pay");
-          localStorage.removeItem("cart");
           localStorage.removeItem("cartLength");
         } else {
           notification["error"]({
@@ -339,6 +352,14 @@ const Pay = () => {
     0
   );
   useEffect(() => {
+    if (selectedProducts.length > 0) {
+      const total = selectedProducts.reduce((acc, item) => {
+        return acc + item.salePrice * item.stock; // Tính tổng tiền
+      }, 0);
+      setTotalPrice(total);
+    }
+  }, [selectedProducts]);
+  useEffect(() => {
     (async () => {
       try {
         // Kiểm tra PayPal
@@ -346,49 +367,47 @@ const Pay = () => {
           setShowModal(true);
         }
 
-        // Các logic ban đầu
-        await productApi.getDetailProduct(id).then((item) => {
-          setProductDetail(item);
-        });
+        // Lấy chi tiết sản phẩm
+        const productDetailResponse = await productApi.getDetailProduct(id);
+        setProductDetail(productDetailResponse);
 
+        // Lấy thông tin người dùng
         const local = localStorage.getItem("user");
-        const user = JSON.parse(local);
-        console.log(user);
+        const user = local ? JSON.parse(local) : null;
 
-        form.setFieldsValue({
-          name: user.username,
-          email: user.email,
-          phone: user.phone,
-        });
+        if (user) {
+          form.setFieldsValue({
+            name: user.username,
+            email: user.email,
+            phone: user.phone,
+          });
+        }
 
+        // Lấy giỏ hàng
         const cart = JSON.parse(localStorage.getItem("cart")) || [];
-        console.log(cart);
+        const selectedProducts =
+          JSON.parse(localStorage.getItem("selectedProducts")) || []; // Lấy sản phẩm đã chọn
 
-        const transformedData = cart.map(
-          ({ _id: product, stock, salePrice, price }) => ({
+        // Lọc giỏ hàng để chỉ lấy sản phẩm đã chọn
+        const transformedData = cart
+          .filter((item) => selectedProducts.includes(item._id)) // Lọc sản phẩm đã chọn
+          .map(({ _id: product, stock, salePrice }) => ({
             product,
             stock,
             salePrice,
-            price,
-          })
-        );
+          }));
 
-        let totalPrice = 0;
-
-        for (let i = 0; i < transformedData.length; i++) {
-          let product = transformedData[i];
-          console.log(product);
-          let price = product.salePrice * product.stock;
-          totalPrice += price;
-        }
+        // Tính tổng tiền cho các sản phẩm đã chọn
+        const totalPrice = transformedData.reduce((acc, item) => {
+          return acc + item.salePrice * item.stock;
+        }, 0);
 
         setOrderTotal(totalPrice);
         setProductDetail(transformedData);
-        console.log(transformedData);
         setUserData(user);
         setLoading(false);
       } catch (error) {
-        console.log("Failed to fetch event detail:" + error);
+        console.log("Failed to fetch event detail:", error);
         setLoading(false);
       }
     })();
@@ -680,10 +699,9 @@ const Pay = () => {
                   <p className="font-bold text-black text-xl">
                     {totalFee?.toLocaleString()} VND
                   </p>
-                  <p>Tổng tiền ( bao gồm phí ship)</p>
+                  <p>Tổng tiền (bao gồm phí ship)</p>
                   <p className="font-bold text-black text-xl">
-                    {(Number(totalPrice) + Number(totalFee))?.toLocaleString()}{" "}
-                    VND
+                    {(orderTotalPrice + totalFee)?.toLocaleString()} VND
                   </p>
 
                   <Form.Item
