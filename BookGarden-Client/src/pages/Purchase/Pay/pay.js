@@ -49,6 +49,8 @@ const Pay = () => {
   const [totalFee, setTotalFee] = useState(0);
 
   const accountCreate = async (values) => {
+    setLoading(true); // Bắt đầu loading khi gửi form
+
     // Tính toán tổng tiền (bao gồm phí ship)
     const totalAmount = orderTotalPrice + totalFee;
     const orderData = {
@@ -270,6 +272,7 @@ const Pay = () => {
   };
 
   const handleModalConfirm = async () => {
+    setLoading(true);
     try {
       const queryParams = new URLSearchParams(window.location.search);
       const paymentId = queryParams.get("paymentId");
@@ -340,6 +343,9 @@ const Pay = () => {
         message: `Thông báo`,
         description: "Có lỗi xảy ra trong quá trình thanh toán.",
       });
+    } finally {
+      setLoading(false); // Kết thúc loading
+      setShowModal(false); // Đóng modal sau khi hoàn tất
     }
   };
 
@@ -533,7 +539,7 @@ const Pay = () => {
   const [selected, setSelected] = useState("null");
   return (
     <div class="py-5">
-      <Spin spinning={false}>
+      <Spin spinning={loading}>
         <Card className="container">
           <div className="product_detail">
             <div style={{ marginLeft: 5, marginBottom: 10, marginTop: 10 }}>
@@ -816,8 +822,9 @@ const Pay = () => {
                     <button
                       className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5"
                       htmlType="submit"
+                      loading={loading}
                     >
-                      Hoàn thành
+                      {loading ? "Đang xử lý..." : "Hoàn thành"}
                     </button>
                   </div>
                 </Form>
