@@ -33,7 +33,9 @@ const Pay = () => {
   const [orderTotal, setOrderTotal] = useState([]);
   const [visible, setVisible] = useState(false);
   const location = useLocation();
-  const { selectedProducts } = location.state || { selectedProducts: [] }; // Lấy sản phẩm đã chọn từ state
+  const { selectedProducts } = location.state || {
+    selectedProducts: [],
+  }; // Lấy sản phẩm đã chọn từ state
   const queryParams = new URLSearchParams(location.search);
   const paymentId = queryParams.get("paymentId");
   const [orderTotalPrice, setTotalPrice] = useState(0); // Khai báo useState cho totalPrice
@@ -47,6 +49,163 @@ const Pay = () => {
     setVisible(false);
   };
   const [totalFee, setTotalFee] = useState(0);
+
+  const [selectedProductss, setSelectedProducts] = useState([]);
+  const saveFormAndProductData = () => {
+    const formValues = form.getFieldsValue();
+
+    // Lưu thông tin form
+    if (formValues.name) {
+      localStorage.setItem("payFormName", formValues.name);
+    }
+
+    if (formValues.email) {
+      localStorage.setItem("payFormEmail", formValues.email);
+    }
+
+    if (formValues.phone) {
+      localStorage.setItem("payFormPhone", formValues.phone);
+    }
+
+    if (formValues.address5) {
+      localStorage.setItem("payFormProvince", formValues.address5);
+    }
+
+    if (formValues.address2) {
+      localStorage.setItem("payFormDistrict", formValues.address2);
+    }
+
+    if (formValues.address3) {
+      localStorage.setItem("payFormWard", formValues.address3);
+    }
+
+    if (formValues.address) {
+      localStorage.setItem("payFormDetailAddress", formValues.address);
+    }
+
+    if (formValues.description) {
+      localStorage.setItem("payFormDescription", formValues.description);
+    }
+
+    if (formValues.billing) {
+      localStorage.setItem("payFormBillingMethod", formValues.billing);
+    }
+
+    // Lưu thông tin sản phẩm
+    if (selectedProducts && selectedProducts.length > 0) {
+      localStorage.setItem(
+        "paySelectedProducts",
+        JSON.stringify(selectedProducts)
+      );
+    }
+
+    // Lưu tổng tiền
+    if (orderTotalPrice) {
+      localStorage.setItem("payOrderTotalPrice", orderTotalPrice.toString());
+    }
+
+    // Lưu phí ship
+    if (totalFee) {
+      localStorage.setItem("payShippingFee", totalFee.toString());
+    }
+  };
+  // Thêm useEffect để tự động lưu dữ liệu
+  useEffect(() => {
+    const handleFormDataChange = () => {
+      saveFormAndProductData();
+    };
+
+    // Đăng ký sự kiện thay đổi form
+    const unregister = form
+      .getInternalHooks("RC_FORM_INTERNAL_HOOKS")
+      .registerWatch(handleFormDataChange);
+
+    // Cleanup function
+    return () => {
+      unregister();
+    };
+  }, [form, selectedProducts, orderTotalPrice, totalFee]);
+  // Hàm khôi phục dữ liệu
+  const restoreFormAndProductData = () => {
+    // Khôi phục thông tin form
+    const savedFormData = {
+      name: localStorage.getItem("payFormName") || undefined,
+      email: localStorage.getItem("payFormEmail") || undefined,
+      phone: localStorage.getItem("payFormPhone") || undefined,
+      address5: localStorage.getItem("payFormProvince")
+        ? parseInt(localStorage.getItem("payFormProvince"))
+        : undefined,
+      address2: localStorage.getItem("payFormDistrict")
+        ? parseInt(localStorage.getItem("payFormDistrict"))
+        : undefined,
+      address3: localStorage.getItem("payFormWard") || undefined,
+      address: localStorage.getItem("payFormDetailAddress") || undefined,
+      description: localStorage.getItem("payFormDescription") || undefined,
+      billing: localStorage.getItem("payFormBillingMethod") || undefined,
+    };
+    // Đặt lại các giá trị cho form
+    form.setFieldsValue(savedFormData);
+
+    // Khôi phục sản phẩm đã chọn
+    const savedSelectedProducts = localStorage.getItem("paySelectedProducts");
+    if (savedSelectedProducts) {
+      const parsedProducts = JSON.parse(savedSelectedProducts);
+      setSelectedProducts(parsedProducts);
+    }
+    // Khôi phục tổng tiền
+    const savedTotalPrice = localStorage.getItem("payOrderTotalPrice");
+    if (savedTotalPrice) {
+      setTotalPrice(parseFloat(savedTotalPrice));
+    }
+
+    // Khôi phục phí ship
+    const savedShippingFee = localStorage.getItem("payShippingFee");
+    if (savedShippingFee) {
+      setTotalFee(parseFloat(savedShippingFee));
+    }
+
+    // Nếu có tỉnh đã lưu, tải huyện
+    if (savedFormData.address5) {
+      fetchHuyen(savedFormData.address5);
+    }
+
+    // Nếu có huyện đã lưu, tải xã
+    if (savedFormData.address2) {
+      fetchXa(savedFormData.address2);
+    }
+  };
+  // Thêm useEffect để khôi phục dữ liệu từ localStorage khi component mount
+  useEffect(() => {
+    restoreFormAndProductData();
+  }, [form]);
+
+  // Thêm hàm xóa dữ liệu localStorage khi đơn hàng hoàn tất
+  const clearPayFormLocalStorage = () => {
+    // Xóa thông tin form
+    const formStorageKeys = [
+      "payFormName",
+      "payFormEmail",
+      "payFormPhone",
+      "payFormProvince",
+      "payFormDistrict",
+      "payFormWard",
+      "payFormDetailAddress",
+      "payFormDescription",
+      "payFormBillingMethod",
+    ];
+
+    // Xóa thông tin sản phẩm và thanh toán
+    const productStorageKeys = [
+      "paySelectedProducts",
+      "payOrderTotalPrice",
+      "payShippingFee",
+    ];
+
+    [...formStorageKeys, ...productStorageKeys].forEach((key) => {
+      localStorage.removeItem(key);
+    });
+  };
+
   console.log("Selected Products:", selectedProducts);
   const orderTotalPriceRef = useRef(orderTotalPrice);
   useEffect(() => {
@@ -57,6 +216,19 @@ const Pay = () => {
       const total = selectedProducts.reduce((acc, item) => {
         return acc + (item.salePrice * item.stock || 0);
       }, 0);
+
+
+  console.log("Selected Products:", selectedProducts);
+  const orderTotalPriceRef = useRef(orderTotalPrice);
+  useEffect(() => {
+    orderTotalPriceRef.current = orderTotalPrice; // Cập nhật giá trị trong useRef
+  }, [orderTotalPrice]);
+  useEffect(() => {
+    if (selectedProducts && selectedProducts.length > 0) {
+      const total = selectedProducts.reduce((acc, item) => {
+        return acc + (item.salePrice * item.stock || 0);
+      }, 0);
+
 
       // Lưu vào localStorage ngay khi tính toán
       localStorage.setItem("selected_products_total", total.toString());
@@ -165,6 +337,9 @@ const Pay = () => {
               message: `Thông báo`,
               description: "Đặt hàng thành công",
             });
+            // Xóa dữ liệu form khỏi localStorage
+            clearPayFormLocalStorage();
+
             // Xóa sản phẩm đã chọn khỏi giỏ hàng
             const cart = JSON.parse(localStorage.getItem("cart")) || [];
             console.log("Current Cart:", cart); // Kiểm tra giỏ hàng hiện tại
@@ -193,7 +368,6 @@ const Pay = () => {
       }, 1000);
     }
   };
-  const exchangeRate = 25000; // Giả sử 1 USD = 25000 VND
   const handlePayment = async (values) => {
     try {
       // Kiểm tra và tính toán phí vận chuyển
@@ -341,10 +515,19 @@ const Pay = () => {
         const selectedProductIds =
           JSON.parse(localStorage.getItem("selectedProducts")) || [];
 
+
         // Lọc bỏ các sản phẩm đã thanh toán khỏi giỏ hàng
         const updatedCart = cart.filter(
           (item) => !selectedProductIds.includes(item._id)
         );
+
+
+
+        // Lọc bỏ các sản phẩm đã thanh toán khỏi giỏ hàng
+        const updatedCart = cart.filter(
+          (item) => !selectedProductIds.includes(item._id)
+        );
+
 
         // Lưu giỏ hàng đã cập nhật
         localStorage.setItem("cart", JSON.stringify(updatedCart));
