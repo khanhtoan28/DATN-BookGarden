@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axiosClient from "../../../apis/axiosClient";
 import { useParams } from "react-router-dom";
 import productApi from "../../../apis/productApi";
@@ -47,7 +47,27 @@ const Pay = () => {
     setVisible(false);
   };
   const [totalFee, setTotalFee] = useState(0);
+  console.log("Selected Products:", selectedProducts);
+  const orderTotalPriceRef = useRef(orderTotalPrice);
+  useEffect(() => {
+    orderTotalPriceRef.current = orderTotalPrice; // Cập nhật giá trị trong useRef
+  }, [orderTotalPrice]);
+  useEffect(() => {
+    if (selectedProducts && selectedProducts.length > 0) {
+      const total = selectedProducts.reduce((acc, item) => {
+        return acc + (item.salePrice * item.stock || 0);
+      }, 0);
 
+      // Lưu vào localStorage ngay khi tính toán
+      localStorage.setItem("selected_products_total", total.toString());
+
+      setTotalPrice(total);
+      console.log("Updated orderTotalPrice:", total);
+    } else {
+      setTotalPrice(0);
+      localStorage.removeItem("selected_products_total");
+    }
+  }, [selectedProducts]);
   const accountCreate = async (values) => {
     setLoading(true); // Bắt đầu loading khi gửi form
 
@@ -59,7 +79,7 @@ const Pay = () => {
       billing: values.billing,
       description: values.description,
       status: "pending",
-      products: selectedProducts, // Chỉ gửi sản phẩm đã chọn
+      products: productDetail,
       orderTotal: totalAmount, // Tổng tiền đã tính
     };
     if (values.billing === "vnpay") {
@@ -117,22 +137,13 @@ const Pay = () => {
     }
 
     // Giữ nguyên logic cho PayPal
-    if (values.billing === "paypal") {
+    else if (values.billing === "paypal") {
       localStorage.setItem("description", values.description);
       localStorage.setItem("address", values.address);
-      try {
-        const approvalUrl = await handlePayment(values);
-        console.log(approvalUrl);
-        if (approvalUrl) {
-          window.location.href = approvalUrl; // Chuyển hướng đến URL thanh toán PayPal
-        } else {
-          notification["error"]({
-            message: `Thông báo`,
-            description: "Thanh toán thất bại",
-          });
-        }
-      } catch (error) {
-        console.error("Error:", error);
+      const approvalUrl = await handlePayment(values, orderData); // Truyền orderData vào hàm handlePayment
+      if (approvalUrl) {
+        window.location.href = approvalUrl; // Chuyển hướng đến URL thanh toán PayPal
+      } else {
         notification["error"]({
           message: `Thông báo`,
           description: "Thanh toán thất bại",
@@ -141,18 +152,7 @@ const Pay = () => {
     } else {
       // Giữ nguyên logic cho COD
       try {
-        const formatData = {
-          userId: userData._id,
-          address: values.address,
-          billing: values.billing,
-          description: values.description,
-          status: "pending",
-          products: productDetail,
-          orderTotal: Number(orderTotalPrice) + Number(totalFee),
-        };
-
-        console.log(formatData);
-        await axiosClient.post("/order", formatData).then((response) => {
+        await axiosClient.post("/order", orderData).then((response) => {
           console.log(response);
 
           if (response == undefined) {
@@ -196,52 +196,76 @@ const Pay = () => {
   const exchangeRate = 25000; // Giả sử 1 USD = 25000 VND
   const handlePayment = async (values) => {
     try {
-      // Tính toán tổng tiền (bao gồm phí ship)
-      const totalAmount = Number(totalPrice) + Number(totalFee);
-
-      if (values.billing === "vnpay") {
-        // Lưu thông tin địa chỉ và mô tả vào localStorage
-        localStorage.setItem("vnpay_description", values.description);
-        localStorage.setItem("vnpay_address", values.address);
-
-        const vnpayData = {
-          amount: totalAmount, // Tổng số tiền thanh toán
-          orderDescription: values.description || "Thanh toán đơn hàng",
-          orderType: "billpayment",
-          language: "vn",
-          returnUrl: "http://localhost:3500/pay", // URL trả về sau khi thanh toán
-        };
-
+      // Kiểm tra và tính toán phí vận chuyển
+      const fetchShippingFee = async () => {
         try {
-          // Gọi API tạo URL thanh toán VNPAY
-          const response = await axiosClient.post(
-            "/vnpay/create-payment-url",
-            vnpayData
-          );
+          // Lấy thông tin địa chỉ từ form
+          const province = form.getFieldValue("address5");
+          const district = form.getFieldValue("address2");
+          const ward = form.getFieldValue("address3");
 
-          if (response.paymentUrl) {
-            // Chuyển hướng đến trang thanh toán VNPAY
-            window.location.href = response.paymentUrl;
-          } else {
-            notification["error"]({
-              message: `Thông báo`,
-              description: "Không thể tạo đường dẫn thanh toán VNPAY",
-            });
+          // Kiểm tra đủ thông tin để tính phí
+          if (province && district && ward) {
+            const dataPayload = {
+              service_type_id: 2,
+              from_district_id: 1542,
+              from_ward_code: "21211",
+              to_district_id: district,
+              to_ward_code: ward,
+              height: 1,
+              length: 1,
+              weight: 1,
+              width: 1,
+              insurance_value: 0,
+              coupon: null,
+              items: [
+                {
+                  name: "TEST1",
+                  stock: 1,
+                  height: 1,
+                  weight: 1,
+                  length: 1,
+                  width: 1,
+                },
+              ],
+            };
+
+            const response = await axios.post(
+              "https://online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/fee",
+              dataPayload,
+              {
+                headers: {
+                  token: "33224be7-ab31-11ef-a89d-dab02cbaab48",
+                  shop_id: "5479564",
+                },
+              }
+            );
+
+            return response?.data?.data?.total || 0;
           }
+          return 0;
         } catch (error) {
-          console.error("VNPAY Payment Error:", error);
-          notification["error"]({
-            message: `Thông báo`,
-            description: "Lỗi trong quá trình tạo thanh toán VNPAY",
-          });
+          console.error("Error fetching shipping fee:", error);
+          return 0;
         }
+      };
 
-        return null; // Trả về null để ngăn các xử lý tiếp theo
-      }
+      // Tính phí vận chuyển
+      const shippingFee = await fetchShippingFee();
 
-      // Giữ nguyên logic cho PayPal
+      // Tính tổng tiền (bao gồm phí ship)
+      const totalAmount = Number(orderTotalPrice) + Number(shippingFee);
+
       if (values.billing === "paypal") {
-        const totalAmountInUSD = (totalAmount / exchangeRate).toFixed(2);
+        // Lưu thông tin vào localStorage
+        localStorage.setItem("paypal_shipping_fee", shippingFee.toString());
+        localStorage.setItem("paypal_total_amount", totalAmount.toString());
+        localStorage.setItem("description", values.description);
+        localStorage.setItem("address", values.address);
+
+        // Chuyển đổi sang USD
+        const totalAmountInUSD = (totalAmount / 25000).toFixed(2);
+
         const productPayment = {
           price: totalAmountInUSD.toString(),
           description: values.description,
@@ -250,6 +274,7 @@ const Pay = () => {
         };
 
         const response = await axiosClient.post("/payment/pay", productPayment);
+
         if (response.approvalUrl) {
           localStorage.setItem("session_paypal", response.accessToken);
           return response.approvalUrl;
@@ -274,6 +299,23 @@ const Pay = () => {
   const handleModalConfirm = async () => {
     setLoading(true);
     try {
+      // Lấy giá trị từ localStorage
+      const storedTotalPrice = localStorage.getItem("paypal_total_amount");
+      const storedShippingFee = localStorage.getItem("paypal_shipping_fee");
+
+      console.log("Stored Total Price:", storedTotalPrice);
+      console.log("Stored Shipping Fee:", storedShippingFee);
+
+      // Kiểm tra giá trị
+      if (!storedTotalPrice || Number(storedTotalPrice) <= 0) {
+        notification["error"]({
+          message: `Thông báo`,
+          description: "Không thể xác định tổng tiền. Vui lòng thử lại.",
+        });
+        setLoading(false);
+        return;
+      }
+
       const queryParams = new URLSearchParams(window.location.search);
       const paymentId = queryParams.get("paymentId");
       const PayerID = queryParams.get("PayerID");
@@ -294,11 +336,19 @@ const Pay = () => {
         const local = localStorage.getItem("user");
         const currentUser = JSON.parse(local);
 
-        // Tính toán tổng số tiền (bao gồm phí ship)
-        const defaultShippingFee = 39001; // Phí ship mặc định
+        // Lấy giỏ hàng hiện tại
+        let cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const selectedProductIds =
+          JSON.parse(localStorage.getItem("selectedProducts")) || [];
 
-        // Đảm bảo tổng tiền bao gồm phí ship
-        const totalAmount = Number(orderTotalPrice) + defaultShippingFee;
+        // Lọc bỏ các sản phẩm đã thanh toán khỏi giỏ hàng
+        const updatedCart = cart.filter(
+          (item) => !selectedProductIds.includes(item._id)
+        );
+
+        // Lưu giỏ hàng đã cập nhật
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
+        localStorage.removeItem("selectedProducts");
 
         const formatData = {
           userId: currentUser._id,
@@ -306,23 +356,33 @@ const Pay = () => {
           billing: "paypal",
           description: description,
           status: "pending",
-          products: selectedProducts,
-          orderTotal: totalAmount, // Lưu tổng số tiền bao gồm phí ship
-          paymentId: paymentId, // Lưu paymentId
-          payerId: PayerID, // Lưu PayerID
+          products: productDetail,
+          orderTotal: Number(storedTotalPrice),
+          shippingFee: Number(storedShippingFee),
+          paymentId: paymentId,
+          payerId: PayerID,
         };
 
         console.log("formatData trước khi gửi:", formatData);
+
         // Gửi yêu cầu lưu đơn hàng vào CSDL
         const orderResponse = await axiosClient.post("/order", formatData);
+
         if (orderResponse) {
           notification["success"]({
             message: `Thông báo`,
             description: "Đặt hàng thành công",
           });
+
+          // Xóa các giá trị localStorage không cần thiết
+          localStorage.removeItem("paypal_total_amount");
+          localStorage.removeItem("paypal_shipping_fee");
+          localStorage.removeItem("description");
+          localStorage.removeItem("address");
+          localStorage.removeItem("cartLength");
+
           form.resetFields();
           history.push("/final-pay");
-          localStorage.removeItem("cartLength");
         } else {
           notification["error"]({
             message: `Thông báo`,
@@ -341,14 +401,13 @@ const Pay = () => {
       console.error("Error executing payment:", error);
       notification["error"]({
         message: `Thông báo`,
-        description: "Có lỗi xảy ra trong quá trình thanh toán.",
+        description: "Có l ỗi xảy ra trong quá trình thanh toán.",
       });
     } finally {
-      setLoading(false); // Kết thúc loading
-      setShowModal(false); // Đóng modal sau khi hoàn tất
+      setLoading(false);
+      setShowModal(false);
     }
   };
-
   const CancelPay = () => {
     form.resetFields();
     history.push("/cart");
@@ -357,46 +416,22 @@ const Pay = () => {
     (acc, item) => acc + item.salePrice * item.stock,
     0
   );
+
   useEffect(() => {
-    if (selectedProducts.length > 0) {
-      const total = selectedProducts.reduce((acc, item) => {
-        return acc + item.salePrice * item.stock; // Tính tổng tiền
-      }, 0);
-      setTotalPrice(total);
-    }
-  }, [selectedProducts]);
-  useEffect(() => {
-    (async () => {
+    const fetchPaymentDetails = async () => {
       try {
-        // Kiểm tra PayPal
-        if (paymentId) {
-          setShowModal(true);
-        }
+        setLoading(true);
 
-        // Lấy chi tiết sản phẩm
-        const productDetailResponse = await productApi.getDetailProduct(id);
-        setProductDetail(productDetailResponse);
-
-        // Lấy thông tin người dùng
+        // Lấy danh sách sản phẩm đã chọn từ localStorage
+        const selectedProductIds =
+          JSON.parse(localStorage.getItem("selectedProducts")) || [];
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
         const local = localStorage.getItem("user");
         const user = local ? JSON.parse(local) : null;
 
-        if (user) {
-          form.setFieldsValue({
-            name: user.username,
-            email: user.email,
-            phone: user.phone,
-          });
-        }
-
-        // Lấy giỏ hàng
-        const cart = JSON.parse(localStorage.getItem("cart")) || [];
-        const selectedProducts =
-          JSON.parse(localStorage.getItem("selectedProducts")) || []; // Lấy sản phẩm đã chọn
-
-        // Lọc giỏ hàng để chỉ lấy sản phẩm đã chọn
+        // Lọc và chuyển đổi sản phẩm được chọn
         const transformedData = cart
-          .filter((item) => selectedProducts.includes(item._id)) // Lọc sản phẩm đã chọn
+          .filter((item) => selectedProductIds.includes(item._id))
           .map(({ _id: product, stock, salePrice }) => ({
             product,
             stock,
@@ -408,18 +443,100 @@ const Pay = () => {
           return acc + item.salePrice * item.stock;
         }, 0);
 
+        // Cập nhật state
         setOrderTotal(totalPrice);
+        setTotalPrice(totalPrice);
         setProductDetail(transformedData);
         setUserData(user);
+
+        // Điền thông tin người dùng vào form
+        if (user) {
+          form.setFieldsValue({
+            name: user.username,
+            email: user.email,
+            phone: user.phone,
+          });
+        }
+
+        // Kiểm tra và xử lý thanh toán PayPal
+        if (paymentId) {
+          console.log("Payment ID detected");
+          console.log("Total Price:", totalPrice);
+
+          // Lưu giá trị vào localStorage để sử dụng sau này
+          localStorage.setItem("paypal_total_price", totalPrice.toString());
+
+          if (totalPrice > 0) {
+            setShowModal(true);
+          } else {
+            notification["error"]({
+              message: `Thông báo`,
+              description:
+                "Tổng tiền không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.",
+            });
+          }
+        }
+
+        // Lấy chi tiết sản phẩm (nếu có ID sản phẩm)
+        if (id) {
+          try {
+            const productDetailResponse = await productApi.getDetailProduct(id);
+            setProductDetail(productDetailResponse);
+          } catch (productError) {
+            console.error("Failed to fetch product details:", productError);
+          }
+        }
+
+        // Đặt trạng thái loading
         setLoading(false);
+
+        // Cuộn trang lên đầu
+        window.scrollTo(0, 0);
       } catch (error) {
-        console.log("Failed to fetch event detail:", error);
+        console.error("Failed to fetch payment details:", error);
+
+        // Hiển thị thông báo lỗi
+        notification["error"]({
+          message: `Thông báo`,
+          description: "Đã có lỗi xảy ra khi tải thông tin thanh toán.",
+        });
+
+        // Kết thúc trạng thái loading
         setLoading(false);
       }
-    })();
+    };
 
-    window.scrollTo(0, 0);
-  }, []);
+    // Gọi hàm fetch
+    fetchPaymentDetails();
+
+    // Dependency array để theo dõi các thay đổi
+  }, [paymentId, id, form]);
+
+  // Thêm useEffect để theo dõi selectedProducts
+  useEffect(() => {
+    const selectedProductIds =
+      JSON.parse(localStorage.getItem("selectedProducts")) || [];
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    const transformedData = cart
+      .filter((item) => selectedProductIds.includes(item._id))
+      .map(({ _id: product, stock, salePrice }) => ({
+        product,
+        stock,
+        salePrice,
+      }));
+
+    const totalPrice = transformedData.reduce((acc, item) => {
+      return acc + item.salePrice * item.stock;
+    }, 0);
+
+    // Cập nhật state và localStorage
+    setOrderTotal(totalPrice);
+    setTotalPrice(totalPrice);
+    localStorage.setItem("paypal_total_price", totalPrice.toString());
+
+    console.log("Updated Total Price:", totalPrice);
+  }, []); // Dependency array rỗng để chạy một lần duy nhất
   const [tinh, setTinh] = useState([]); // Danh sách tỉnh
   const [huyen, setHuyen] = useState([]); // Danh sách huyện
   const [xa, setXa] = useState([]); // Danh sách xã
