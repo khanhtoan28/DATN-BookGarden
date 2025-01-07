@@ -49,7 +49,6 @@ const Pay = () => {
     setVisible(false);
   };
   const [totalFee, setTotalFee] = useState(0);
-
   const [selectedProductss, setSelectedProducts] = useState([]);
   const saveFormAndProductData = () => {
     const formValues = form.getFieldsValue();
@@ -216,19 +215,6 @@ const Pay = () => {
       const total = selectedProducts.reduce((acc, item) => {
         return acc + (item.salePrice * item.stock || 0);
       }, 0);
-
-
-  console.log("Selected Products:", selectedProducts);
-  const orderTotalPriceRef = useRef(orderTotalPrice);
-  useEffect(() => {
-    orderTotalPriceRef.current = orderTotalPrice; // Cập nhật giá trị trong useRef
-  }, [orderTotalPrice]);
-  useEffect(() => {
-    if (selectedProducts && selectedProducts.length > 0) {
-      const total = selectedProducts.reduce((acc, item) => {
-        return acc + (item.salePrice * item.stock || 0);
-      }, 0);
-
 
       // Lưu vào localStorage ngay khi tính toán
       localStorage.setItem("selected_products_total", total.toString());
@@ -515,19 +501,10 @@ const Pay = () => {
         const selectedProductIds =
           JSON.parse(localStorage.getItem("selectedProducts")) || [];
 
-
         // Lọc bỏ các sản phẩm đã thanh toán khỏi giỏ hàng
         const updatedCart = cart.filter(
           (item) => !selectedProductIds.includes(item._id)
         );
-
-
-
-        // Lọc bỏ các sản phẩm đã thanh toán khỏi giỏ hàng
-        const updatedCart = cart.filter(
-          (item) => !selectedProductIds.includes(item._id)
-        );
-
 
         // Lưu giỏ hàng đã cập nhật
         localStorage.setItem("cart", JSON.stringify(updatedCart));
