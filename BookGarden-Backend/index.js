@@ -5,7 +5,6 @@ const mongoose = require("mongoose");
 const app = express();
 const DB_MONGO = require("./app/config/db.config");
 const _CONST = require("./app/config/constant");
-// const { sendEmailNotification } = require('./app/kafka/consumer');
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 //router
@@ -178,7 +177,7 @@ app.get("/api/update-complaint/:id", async (req, res) => {
 
     <footer style="margin-top: 30px; text-align: center; font-size: 14px; color: #555;">
       <p style="margin: 5px 0;">BookGarden - Cửa hàng sách yêu thương</p>
-      <p style="margin: 5px 0;">Hotline: 1900 123 456 | Email: support@bookgarden.com</p>
+      <p style="margin: 5px 0;">Hotline: 1900 123 456 | Email: dotuanduong287@gmail.com</p>
     </footer>
   </div>
 `;
