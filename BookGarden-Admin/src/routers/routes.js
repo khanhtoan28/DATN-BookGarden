@@ -10,6 +10,7 @@ import Sidebar from "../components/layout/sidebar/sidebar";
 import LoadingScreen from "../components/loading/loadingScreen";
 import PrivateRoute from "../components/PrivateRoute";
 import PublicRoute from "../components/PublicRoute";
+import Setting from "../pages/settings/Setting";
 
 const { Content } = Layout;
 
@@ -182,7 +183,11 @@ const RouterURL = withRouter(({ location }) => {
                 <ProductList />
               </Suspense>
             </PrivateRoute>
-
+            <PrivateRoute exact path="/settings">
+              <Suspense fallback={<LoadingScreen />}>
+                <Setting />
+              </Suspense>
+            </PrivateRoute>
             <PrivateRoute exact path="/category-list">
               <Suspense fallback={<LoadingScreen />}>
                 <CategoryList />
@@ -252,6 +257,9 @@ const RouterURL = withRouter(({ location }) => {
             <DefaultContainer />
           </Route>
           <Route exact path="/product-list">
+            <DefaultContainer />
+          </Route>
+          <Route exact path="/settings">
             <DefaultContainer />
           </Route>
           <Route exact path="/category-list">

@@ -56,6 +56,12 @@ function Sidebar() {
       icon: <ExclamationCircleOutlined />,
     },
     {
+      key: "settings",
+      title: "Thời gian giảm giá",
+      link: "/settings",
+      icon: <ExclamationCircleOutlined />,
+    },
+    {
       key: "news-list",
       title: "Tin tức",
       link: "/news-list",
