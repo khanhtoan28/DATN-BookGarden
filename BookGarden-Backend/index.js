@@ -19,9 +19,12 @@ const orderRoute = require("./app/routers/order");
 const statisticalRoute = require("./app/routers/statistical");
 const paymentRoute = require("./app/routers/paypal");
 const newsRoute = require("./app/routers/news");
+
 const complaintModel = require("./app/models/complaintModel");
 const order = require("./app/models/order");
 const vnpayRoute = require("./app/routers/vnpay");
+const setting = require("./app/models/setting");
+const product = require("./app/models/product");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
@@ -49,6 +52,27 @@ app.use("/api/payment", paymentRoute);
 app.use("/api/news", newsRoute);
 app.use("/api/vnpay", vnpayRoute);
 app.use("/uploads", express.static("uploads"));
+app.get("/api/set-time", async (req, res) => {
+  try {
+    const data = req.query.time;
+    await setting.deleteMany();
+    await setting.create({
+      time: data,
+    });
+    return res.json("ok");
+  } catch (error) {
+    console.log(error);
+  }
+});
+app.get("/api/get-time", async (req, res) => {
+  try {
+    const data = await setting.find({});
+
+    return res.json(data[0]);
+  } catch (error) {
+    console.log(error);
+  }
+});
 // sendEmailNotification();
 app.get("/api/complaint/:id", async (req, res) => {
   try {
@@ -65,6 +89,27 @@ app.get("/api/complaint/:id", async (req, res) => {
     res.status(500).json({ message: "Lỗi khi lấy dữ liệu khiếu nại" });
   }
 });
+const updateVoucherTimes = async () => {
+  try {
+    const settings = await setting.find({ time: { $gt: 0 } });
+    for (let setting of settings) {
+      const now = new Date();
+      const createDate = setting.createdAt;
+      const diffInTime = now - createDate;
+      const diffInDays = Math.floor(diffInTime / (1000 * 3600 * 24));
+      let newTime = setting.time - diffInDays;
+      if (newTime <= 0) {
+        newTime = -1;
+      }
+      setting.time = newTime;
+      await setting.save();
+    }
+
+    console.log("Đã cập nhật tất cả các bản ghi.");
+  } catch (error) {
+    console.error("Lỗi khi cập nhật: ", error);
+  }
+};
 app.get("/api/complaint", async (req, res) => {
   try {
     const complaint = await complaintModel
@@ -154,7 +199,7 @@ app.get("/api/update-complaint/:id", async (req, res) => {
     <p style="font-size: 16px; text-align: center; margin-bottom: 30px;">Xin chào <strong>${
       data.user.username || "Khách hàng"
     }</strong>, trạng thái khiếu nại của bạn đã được cập nhật. Dưới đây là chi tiết:</p>
-    
+
     <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
       <thead>
         <tr style="background-color: #20c997; color: #fff; text-align: left;">
