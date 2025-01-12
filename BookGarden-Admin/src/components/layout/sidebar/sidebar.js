@@ -56,6 +56,12 @@ function Sidebar() {
       icon: <ExclamationCircleOutlined />,
     },
     {
+      key: "voucher-list",
+      title: "Quản lý Voucher",
+      link: "/voucher-list",
+      icon: <ExclamationCircleOutlined />,
+    },
+    {
       key: "settings",
       title: "Thời gian giảm giá",
       link: "/settings",
