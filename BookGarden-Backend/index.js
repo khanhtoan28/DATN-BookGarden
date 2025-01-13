@@ -19,6 +19,7 @@ const orderRoute = require("./app/routers/order");
 const statisticalRoute = require("./app/routers/statistical");
 const paymentRoute = require("./app/routers/paypal");
 const newsRoute = require("./app/routers/news");
+const voucherRoute = require("./app/routers/voucher");
 
 const complaintModel = require("./app/models/complaintModel");
 const order = require("./app/models/order");
@@ -50,6 +51,7 @@ app.use("/api/statistical", statisticalRoute);
 app.use("/api/order", orderRoute);
 app.use("/api/payment", paymentRoute);
 app.use("/api/news", newsRoute);
+app.use("/api", voucherRoute);
 app.use("/api/vnpay", vnpayRoute);
 app.use("/uploads", express.static("uploads"));
 app.get("/api/set-time", async (req, res) => {
@@ -110,6 +112,49 @@ const updateVoucherTimes = async () => {
     console.error("Lỗi khi cập nhật: ", error);
   }
 };
+const checkTimeRemoveDiscount = async () => {
+  try {
+    const timeDate = await setting.find({});
+    if (timeDate.length === 0) {
+      console.log("Không có dữ liệu trong bảng settings");
+      return;
+    }
+    const productData = await product.find({});
+    if (productData.length === 0) {
+      console.log("Không có dữ liệu trong bảng product");
+      return;
+    }
+    const timeData = timeDate[0];
+    const createDate = new Date(timeData.createdAt);
+    const timeLimit = timeData.time; // Số ngày giới hạn
+    const currentDate = new Date();
+    console.log(createDate, "createDate");
+    console.log(timeLimit, "timeLimit");
+    console.log(currentDate, "currentDate");
+    const timeDiff = Math.floor(
+      (currentDate - createDate) / (1000 * 60 * 60 * 24)
+    );
+
+    if (timeDiff > timeLimit) {
+      console.log("first");
+      await product.updateMany({}, [
+        {
+          $set: {
+            salePrice: "$price",
+          },
+        },
+      ]);
+    } else {
+      console.log("Còn hạn");
+    }
+  } catch (error) {
+    console.error("Lỗi:", error);
+  }
+};
+setInterval(() => {
+  checkTimeRemoveDiscount();
+  updateVoucherTimes()
+}, 5000);
 app.get("/api/complaint", async (req, res) => {
   try {
     const complaint = await complaintModel

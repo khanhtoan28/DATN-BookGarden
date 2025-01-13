@@ -10,6 +10,7 @@ import Sidebar from "../components/layout/sidebar/sidebar";
 import LoadingScreen from "../components/loading/loadingScreen";
 import PrivateRoute from "../components/PrivateRoute";
 import PublicRoute from "../components/PublicRoute";
+import VoucherList from "../pages/voucher/voucher";
 import Setting from "../pages/settings/Setting";
 
 const { Content } = Layout;
@@ -183,6 +184,11 @@ const RouterURL = withRouter(({ location }) => {
                 <ProductList />
               </Suspense>
             </PrivateRoute>
+            <PrivateRoute exact path="/voucher-list">
+              <Suspense fallback={<LoadingScreen />}>
+                <VoucherList />
+              </Suspense>
+            </PrivateRoute>
             <PrivateRoute exact path="/settings">
               <Suspense fallback={<LoadingScreen />}>
                 <Setting />
@@ -257,6 +263,9 @@ const RouterURL = withRouter(({ location }) => {
             <DefaultContainer />
           </Route>
           <Route exact path="/product-list">
+            <DefaultContainer />
+          </Route>
+          <Route exact path="/voucher-list">
             <DefaultContainer />
           </Route>
           <Route exact path="/settings">

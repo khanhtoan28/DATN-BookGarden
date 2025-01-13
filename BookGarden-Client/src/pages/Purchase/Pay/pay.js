@@ -32,6 +32,10 @@ const Pay = () => {
   const [loading, setLoading] = useState(true);
   const [orderTotal, setOrderTotal] = useState([]);
   const [visible, setVisible] = useState(false);
+  const [valueVouche, setValueVouche] = useState({
+    value: 0,
+  });
+
   const location = useLocation();
   const { selectedProducts } = location.state || {
     selectedProducts: [],
@@ -42,6 +46,7 @@ const Pay = () => {
   const [form] = Form.useForm();
   const [template_feedback, setTemplateFeedback] = useState();
   let { id } = useParams();
+  const [product, setProduct] = useState([]);
   const history = useHistory();
   const [showModal, setShowModal] = useState(false);
   const cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -50,6 +55,17 @@ const Pay = () => {
   };
   const [totalFee, setTotalFee] = useState(0);
   const [selectedProductss, setSelectedProducts] = useState([]);
+  useEffect(() => {
+    (async () => {
+      try {
+        await productApi.getListVoucher().then((res) => {
+          setProduct(res.data.docs);
+        });
+      } catch (error) {
+        console.log("Failed to fetch event list:" + error);
+      }
+    })();
+  }, []);
   const saveFormAndProductData = () => {
     const formValues = form.getFieldsValue();
 
@@ -177,7 +193,7 @@ const Pay = () => {
   useEffect(() => {
     restoreFormAndProductData();
   }, [form]);
-
+  const currentDate = new Date();
   // Thêm hàm xóa dữ liệu localStorage khi đơn hàng hoàn tất
   const clearPayFormLocalStorage = () => {
     // Xóa thông tin form
@@ -230,7 +246,12 @@ const Pay = () => {
     setLoading(true); // Bắt đầu loading khi gửi form
 
     // Tính toán tổng tiền (bao gồm phí ship)
-    const totalAmount = orderTotalPrice + totalFee;
+    const totalAmount =
+      valueVouche?.value == "freeShip"
+        ? orderTotalPrice
+        : Number(orderTotalPrice) - Number(valueVouche.value || 0) + totalFee;
+    console.log(totalAmount, "totalAmount");
+    console.log(valueVouche, "valueVouche");
     const orderData = {
       userId: userData._id,
       address: values.address,
@@ -414,7 +435,11 @@ const Pay = () => {
       const shippingFee = await fetchShippingFee();
 
       // Tính tổng tiền (bao gồm phí ship)
-      const totalAmount = Number(orderTotalPrice) + Number(shippingFee);
+      // const totalAmount = Number(orderTotalPrice) + Number(shippingFee);
+      const totalAmount =
+        valueVouche?.value == "freeShip"
+          ? orderTotalPrice
+          : Number(orderTotalPrice) - Number(valueVouche.value || 0) + totalFee;
 
       if (values.billing === "paypal") {
         // Lưu thông tin vào localStorage
@@ -455,7 +480,7 @@ const Pay = () => {
       throw error;
     }
   };
-
+  const cartLength = localStorage.getItem("cartLength");
   const handleModalConfirm = async () => {
     setLoading(true);
     try {
@@ -561,7 +586,7 @@ const Pay = () => {
       console.error("Error executing payment:", error);
       notification["error"]({
         message: `Thông báo`,
-        description: "Có l ỗi xảy ra trong quá trình thanh toán.",
+        description: "Có lỗi xảy ra trong quá trình thanh toán.",
       });
     } finally {
       setLoading(false);
@@ -968,7 +993,7 @@ const Pay = () => {
                       className="w-full"
                       allowClear
                       onChange={(e) => onGetPrice(e)}
-                      disabled={!xa.length}
+                      disabled={!xa?.length}
                     >
                       {xa.map((item) => (
                         <Option key={item.WardCode} value={item.WardCode}>
@@ -980,13 +1005,82 @@ const Pay = () => {
 
                   <p>Phí ship</p>
                   <p className="font-bold text-black text-xl">
-                    {totalFee?.toLocaleString()} VND
+                    {valueVouche?.value == "freeShip" ? (
+                      <span
+                        style={{
+                          textDecoration: "line-through",
+                        }}
+                      >
+                        {" "}
+                        {totalFee?.toLocaleString()} VND
+                      </span>
+                    ) : (
+                      totalFee?.toLocaleString() + "VND"
+                    )}
                   </p>
                   <p>Tổng tiền (bao gồm phí ship)</p>
                   <p className="font-bold text-black text-xl">
-                    {(orderTotalPrice + totalFee)?.toLocaleString()} VND
+                    {valueVouche?.value == "freeShip"
+                      ? orderTotalPrice?.toLocaleString()
+                      : (
+                          orderTotalPrice +
+                          totalFee -
+                          valueVouche?.value
+                        )?.toLocaleString()}{" "}
+                    VND
                   </p>
-
+                  <Form.Item
+                    name="type"
+                    label="Loại voucher"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng chọn Loại voucher!",
+                      },
+                    ]}
+                    style={{ marginBottom: 10 }}
+                  >
+                    <Select
+                      onChange={(value) => {
+                        console.log(value, "opkoko");
+                        setValueVouche({
+                          value: typeof value == "number" ? value : "freeShip",
+                        });
+                      }}
+                      style={{ width: "100%" }}
+                      placeholder="Loại voucher"
+                    >
+                      {product
+                        ?.filter((iac) => iac.status == "active")
+                        ?.map((itc, index) => {
+                          const endDate = new Date(itc.endDate);
+                          console.log(endDate, "endDate");
+                          console.log(currentDate, "currentDate");
+                          return (
+                            <Option
+                              disabled={
+                                // currentDate
+                                // itc.type == "freeShip" && Number(cartLength) < 2
+                                Number(orderTotalPrice) < Number(itc.require)
+                              }
+                              key={itc._id}
+                              value={itc.value}
+                            >
+                              {itc?.name}{" "}
+                              <span
+                                style={{
+                                  fontWeight: "bold",
+                                  paddingLeft: "10px",
+                                }}
+                              >
+                                Điều kiện sử dụng đơn hàng lớn hơn{" "}
+                                {Number(itc.require)?.toLocaleString()}
+                              </span>
+                            </Option>
+                          );
+                        })}
+                    </Select>
+                  </Form.Item>
                   <Form.Item
                     name="address"
                     label="Nhập chi tiết số nhà, ngách ngõ"
