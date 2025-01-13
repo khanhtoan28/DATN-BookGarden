@@ -13,6 +13,8 @@ import {
   UnorderedListOutlined,
   FolderOutlined,
   ExclamationCircleOutlined,
+  FieldTimeOutlined,
+  GiftOutlined,
 } from "@ant-design/icons";
 
 const { SubMenu } = Menu;
@@ -41,7 +43,12 @@ function Sidebar() {
       link: "/product-list",
       icon: <FormOutlined />,
     },
-
+    {
+      key: "settings",
+      title: "Thời gian giảm giá",
+      link: "/settings",
+      icon: <FieldTimeOutlined />,
+    },
     {
       key: "order-list",
       title: "Quản lý đơn hàng",
@@ -59,17 +66,12 @@ function Sidebar() {
       key: "voucher-list",
       title: "Quản lý Voucher",
       link: "/voucher-list",
-      icon: <ExclamationCircleOutlined />,
+      icon: <GiftOutlined />,
     },
-    {
-      key: "settings",
-      title: "Thời gian giảm giá",
-      link: "/settings",
-      icon: <ExclamationCircleOutlined />,
-    },
+
     {
       key: "news-list",
-      title: "Tin tức",
+      title: "Quản lý tin tức",
       link: "/news-list",
       icon: <DiffOutlined />,
     },

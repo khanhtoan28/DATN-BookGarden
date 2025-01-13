@@ -36,7 +36,7 @@ import SunEditor from "suneditor-react";
 import "suneditor/dist/css/suneditor.min.css";
 import axiosClient from "../../apis/axiosClient";
 import productApi from "../../apis/productsApi";
-import "./productList.css";
+import "./voucher.css";
 import moment, * as moments from "moment";
 const { confirm } = Modal;
 const { Option } = Select;
@@ -78,12 +78,12 @@ const VoucherList = () => {
           if (response === undefined) {
             notification["error"]({
               message: `Thông báo`,
-              description: " thất bại",
+              description: "Thêm voucher thất bại",
             });
           } else {
             notification["success"]({
               message: `Thông báo`,
-              description: " thành công",
+              description: "Thêm voucher thành công",
             });
             setImages([]);
             setOpenModalCreate(false);
@@ -160,13 +160,13 @@ const VoucherList = () => {
         if (response === undefined) {
           notification["error"]({
             message: `Thông báo`,
-            description: "Xóa sản phẩm thất bại",
+            description: "Xóa thất bại",
           });
           setLoading(false);
         } else {
           notification["success"]({
             message: `Thông báo`,
-            description: "Xóa sản phẩm thành công",
+            description: "Xóa thành công",
           });
           setCurrentPage(1);
           handleProductList();
