@@ -177,9 +177,9 @@ const CartHistory = () => {
       title: <div className="text-center">Tổng đơn hàng</div>,
       dataIndex: "orderTotal",
       key: "orderTotal",
-      render: (products) => (
+      render: (orderTotal) => (
         <div className="text-center">
-          {products?.toLocaleString("vi", {
+          {Math.max(0, orderTotal || 0).toLocaleString("vi-VN", {
             style: "currency",
             currency: "VND",
           })}
