@@ -1005,28 +1005,26 @@ const Pay = () => {
 
                   <p>Phí ship</p>
                   <p className="font-bold text-black text-xl">
-                    {valueVouche?.value == "freeShip" ? (
+                    {valueVouche?.value === "freeShip" ? (
                       <span
                         style={{
                           textDecoration: "line-through",
                         }}
                       >
-                        {" "}
                         {totalFee?.toLocaleString()} VND
                       </span>
                     ) : (
-                      totalFee?.toLocaleString() + "VND"
+                      totalFee?.toLocaleString() + " VND"
                     )}
                   </p>
                   <p>Tổng tiền (bao gồm phí ship)</p>
                   <p className="font-bold text-black text-xl">
-                    {valueVouche?.value == "freeShip"
+                    {valueVouche?.value === "freeShip"
                       ? orderTotalPrice?.toLocaleString()
-                      : (
-                          orderTotalPrice +
-                          totalFee -
-                          valueVouche?.value
-                        )?.toLocaleString()}{" "}
+                      : Math.max(
+                        0,
+                        orderTotalPrice + totalFee - (valueVouche?.value || 0)
+                      )?.toLocaleString()}{" "}
                     VND
                   </p>
                   <Form.Item
