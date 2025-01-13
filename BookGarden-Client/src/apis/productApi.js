@@ -50,6 +50,18 @@ const productApi = {
     const url = "/category/products/" + id;
     return axiosClient.post(url, data);
   },
+  getDetailVoucher(id) {
+    const url = "/voucher/" + id;
+    return axiosClient.get(url);
+  },
+  getListVoucher() {
+    const url = "/voucher";
+    return axiosClient.get(url);
+  },
+  deleteVoucher(id) {
+    const url = "/voucher/delete/" + id;
+    return axiosClient.delete(url);
+  },
 };
 
 export default productApi;
