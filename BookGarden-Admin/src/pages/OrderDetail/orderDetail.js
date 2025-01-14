@@ -115,6 +115,10 @@ const OrderDetail = () => {
                             return "Hoàn thành";
                           case "rejected":
                             return "Đã hủy";
+                          case "canceled-not-refunded":
+                            return "Đã hủy - Đợi hoàn tiền";
+                          case "refunded":
+                            return "Đã hoàn tiền";
                           default:
                             return order.status;
                         }

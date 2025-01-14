@@ -180,10 +180,7 @@ const Complaint = () => {
                                         color: "#28a745",
                                         display: "block",
                                       }}
-                                    >
-                                      {order.status ||
-                                        "Trạng thái không xác định"}
-                                    </Text>
+                                    ></Text>
                                     <Text
                                       style={{
                                         display: "block",
