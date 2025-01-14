@@ -993,14 +993,17 @@ const Pay = () => {
                       className="w-full"
                       allowClear
                       onChange={(e) => onGetPrice(e)}
-                      disabled={!xa?.length}
+                      disabled={!Array.isArray(xa) || xa.length === 0}
                     >
-                      {xa.map((item) => (
-                        <Option key={item.WardCode} value={item.WardCode}>
-                          {item.WardName}
-                        </Option>
-                      ))}
+                      {Array.isArray(xa) && xa.length > 0
+                        ? xa.map((item) => (
+                          <Option key={item.WardCode} value={item.WardCode}>
+                            {item.WardName}
+                          </Option>
+                        ))
+                        : null}
                     </Select>
+
                   </Form.Item>
 
                   <p>Phí ship</p>
@@ -1030,12 +1033,6 @@ const Pay = () => {
                   <Form.Item
                     name="type"
                     label="Loại voucher"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Vui lòng chọn Loại voucher!",
-                      },
-                    ]}
                     style={{ marginBottom: 10 }}
                   >
                     <Select
@@ -1122,11 +1119,10 @@ const Pay = () => {
                     <div className="flex space-x-4">
                       {/* COD */}
                       <label
-                        className={`text-gray-900 bg-[#37df37] hover:bg-[#37df37]/90 focus:ring-4 focus:outline-none focus:ring-[#37df37]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#37df37]/50 me-2 mb-2 ${
-                          selected === "cod"
+                        className={`text-gray-900 bg-[#37df37] hover:bg-[#37df37]/90 focus:ring-4 focus:outline-none focus:ring-[#37df37]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#37df37]/50 me-2 mb-2 ${selected === "cod"
                             ? "font-bold border-2 border-[#37df37] bg-[#37df37]/10 text-[#37df37]"
                             : "border border-gray-300"
-                        }`}
+                          }`}
                         onClick={() => setSelected("cod")} // Thêm onClick để thay đổi trạng thái
                       >
                         <img
@@ -1148,11 +1144,10 @@ const Pay = () => {
 
                       {/* PAYPAL */}
                       <label
-                        className={`text-gray-900 bg-[#F7BE38] hover:bg-[#F7BE38]/90 focus:ring-4 focus:outline-none focus:ring-[#F7BE38]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#F7BE38]/50 me-2 mb-2 ${
-                          selected === "paypal"
+                        className={`text-gray-900 bg-[#F7BE38] hover:bg-[#F7BE38]/90 focus:ring-4 focus:outline-none focus:ring-[#F7BE38]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#F7BE38]/50 me-2 mb-2 ${selected === "paypal"
                             ? "font-bold border-2 border-[#F7BE38] bg-[#F7BE38]/10 text-[#F7BE38]"
                             : "border border-gray-300"
-                        }`}
+                          }`}
                         onClick={() => setSelected("paypal")} // Thêm onClick để thay đổi trạng thái
                       >
                         <svg
