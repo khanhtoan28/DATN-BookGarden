@@ -92,7 +92,12 @@ const OrderDetail = () => {
                       </div>
                     </td>
 
-                    <td>{order.orderTotal}</td>
+                    <td>
+                      {(order.orderTotal >= 0 ? order.orderTotal : 0).toLocaleString("vi", {
+                        style: "currency",
+                        currency: "VND",
+                      })}
+                    </td>
                     <td>{order.address}</td>
                     <td>{order.billing}</td>
                     <td>
