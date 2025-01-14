@@ -121,10 +121,13 @@ const OrderList = () => {
       key: "orderTotal",
       render: (text) => (
         <a>
-          {text?.toLocaleString("vi", { style: "currency", currency: "VND" })}
+          {(text >= 0 ? text : 0).toLocaleString("vi", {
+            style: "currency",
+            currency: "VND",
+          })}
         </a>
       ),
-    },
+    },    
     {
       title: "Hình thức thanh toán",
       dataIndex: "billing",

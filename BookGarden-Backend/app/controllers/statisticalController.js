@@ -42,7 +42,7 @@ const statisticalController = {
       const orderIncomePromise = OrderModel.aggregate([
         {
           $match: {
-            status: "final", // Hoặc status: "delivered" tùy vào trạng thái đã thanh toán hay giao hàng thành công của đơn hàng
+            status: "final", // Chỉ đơn hàng có trạng thái 'final'
             createdAt: {
               $gte: last12Months,
               $lte: new Date(),
@@ -50,12 +50,18 @@ const statisticalController = {
           },
         },
         {
+          $match: {
+            orderTotal: { $gte: 0 }, // Bao gồm cả đơn hàng 0 đồng, loại bỏ đơn hàng âm
+          },
+        },
+        {
           $group: {
             _id: null,
-            totalIncome: { $sum: "$orderTotal" },
+            totalIncome: { $sum: "$orderTotal" }, // Tổng doanh thu
           },
         },
       ]);
+      
 
       // Thống kê khiếu nại
       const complaintCountPromise = ComplaintModel.aggregate([
