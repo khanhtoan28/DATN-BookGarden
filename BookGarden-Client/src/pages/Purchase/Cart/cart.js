@@ -51,6 +51,7 @@ const Cart = () => {
     setProductDetail([]);
     setCartTotal(0);
     setCartLength(0);
+    window.location.reload();
   };
 
   const updateStock = (productId, newStock) => {

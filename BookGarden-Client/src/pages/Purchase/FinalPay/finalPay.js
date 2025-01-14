@@ -7,6 +7,7 @@ import productApi from "../../../apis/productApi";
 import userApi from "../../../apis/userApi";
 import "./finalPay.css";
 import { Link } from "react-router-dom";
+
 const FinalPay = () => {
   const [productDetail, setProductDetail] = useState([]);
   const [userData, setUserData] = useState([]);
@@ -21,6 +22,12 @@ const FinalPay = () => {
   };
 
   useEffect(() => {
+    // Kiểm tra nếu trang chưa tải lại
+    if (!sessionStorage.getItem("reloaded")) {
+      sessionStorage.setItem("reloaded", "true");
+      window.location.reload();
+    }
+
     (async () => {
       try {
         const item = await productApi.getDetailProduct(id);
