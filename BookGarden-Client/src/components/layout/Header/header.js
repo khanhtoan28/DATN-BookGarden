@@ -100,11 +100,24 @@ function Topbar() {
         // Lấy giỏ hàng từ localStorage và tính toán số lượng sản phẩm trong giỏ
         const cart = JSON.parse(localStorage.getItem("cart")) || [];
         setCart(cart.length); // Cập nhật lại số lượng giỏ hàng
+
+        // Lắng nghe sự thay đổi của localStorage
+        const handleStorageChange = () => {
+          const updatedCart = JSON.parse(localStorage.getItem("cart")) || [];
+          setCart(updatedCart.length); // Cập nhật lại số lượng giỏ hàng
+        };
+
+        window.addEventListener("storage", handleStorageChange);
+
+        return () => {
+          window.removeEventListener("storage", handleStorageChange);
+        };
       } catch (error) {
         console.log("Failed to fetch profile user:" + error);
       }
     })();
   }, []);
+
 
   return (
     <Header style={{ background: "green" }} className={styles.header}>
