@@ -68,7 +68,6 @@ function Sidebar() {
       link: "/voucher-list",
       icon: <GiftOutlined />,
     },
-
     {
       key: "news-list",
       title: "Quản lý tin tức",
@@ -138,7 +137,6 @@ function Sidebar() {
           </Menu.Item>
         ))}
 
-        {/* Dropdown for category-related items */}
         <SubMenu
           key="product-categories"
           icon={<UnorderedListOutlined />}
