@@ -202,16 +202,47 @@ const orderController = {
 
   updateOrder: async (req, res) => {
     const id = req.params.id;
-    const { status, description, address } = req.body;
+    const { status, description, address, billing } = req.body;
 
     try {
+      const currentOrder = await OrderModel.findById(id).populate("user");
+
+      if (!currentOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      // Log để kiểm tra
+      console.log("Current Order:", currentOrder);
+      console.log("Requested Status:", status);
+      console.log("Current Billing:", currentOrder.billing);
+      let finalStatus = status;
+      if (
+        currentOrder.billing?.toLowerCase() === "paypal" &&
+        (currentOrder.status === "pending" ||
+          currentOrder.status === "confirmed") &&
+        status === "rejected"
+      ) {
+        // Chuyển sang trạng thái canceled-not-refunded thay vì rejected
+        finalStatus = "canceled-not-refunded";
+        console.log("PayPal Order - Status changed to canceled-not-refunded");
+      }
       // Cập nhật trạng thái đơn hàng
       const order = await OrderModel.findByIdAndUpdate(
         id,
-        { status, description, address },
+        { status: finalStatus, description, address },
         { new: true }
       ).populate("user"); // Lấy thông tin người dùng liên quan
 
+      // Hoàn lại số lượng sản phẩm nếu hủy đơn
+      if (
+        finalStatus === "rejected" ||
+        finalStatus === "canceled-not-refunded"
+      ) {
+        for (const item of order.products) {
+          await Product.findByIdAndUpdate(item.product, {
+            $inc: { stock: item.stock },
+          });
+        }
+      }
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
@@ -237,6 +268,12 @@ const orderController = {
           break;
         case "rejected":
           statusDisplay = "Đã hủy";
+          break;
+        case "canceled-not-refunded":
+          statusDisplay = "Đã hủy - chưa hoàn tiền";
+          break;
+        case "refunded":
+          statusDisplay = "Đã hoàn tiền";
           break;
         default:
           statusDisplay = status; // Nếu không có trạng thái nào khớp, giữ nguyên giá trị ban đầu

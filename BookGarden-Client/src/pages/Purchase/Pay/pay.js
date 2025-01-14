@@ -363,7 +363,7 @@ const Pay = () => {
             localStorage.setItem("cart", JSON.stringify(updatedCart)); // Cập nhật giỏ hàng
 
             form.resetFields();
-            history.push("/final-pay");
+            history.push("/final-pay?reload=true");
             localStorage.removeItem("cartLength");
           }
         });
@@ -567,7 +567,7 @@ const Pay = () => {
           localStorage.removeItem("cartLength");
 
           form.resetFields();
-          history.push("/final-pay");
+          history.push("/final-pay?reload=true");
         } else {
           notification["error"]({
             message: `Thông báo`,
@@ -997,13 +997,12 @@ const Pay = () => {
                     >
                       {Array.isArray(xa) && xa.length > 0
                         ? xa.map((item) => (
-                          <Option key={item.WardCode} value={item.WardCode}>
-                            {item.WardName}
-                          </Option>
-                        ))
+                            <Option key={item.WardCode} value={item.WardCode}>
+                              {item.WardName}
+                            </Option>
+                          ))
                         : null}
                     </Select>
-
                   </Form.Item>
 
                   <p>Phí ship</p>
@@ -1025,9 +1024,9 @@ const Pay = () => {
                     {valueVouche?.value === "freeShip"
                       ? orderTotalPrice?.toLocaleString()
                       : Math.max(
-                        0,
-                        orderTotalPrice + totalFee - (valueVouche?.value || 0)
-                      )?.toLocaleString()}{" "}
+                          0,
+                          orderTotalPrice + totalFee - (valueVouche?.value || 0)
+                        )?.toLocaleString()}{" "}
                     VND
                   </p>
                   <Form.Item
@@ -1039,25 +1038,31 @@ const Pay = () => {
                       onChange={(value) => {
                         console.log(value, "opkoko");
                         setValueVouche({
-                          value: typeof value == "number" ? value : "freeShip",
+                          value:
+                            typeof value === "number"
+                              ? value
+                              : value === "none"
+                              ? null
+                              : "freeShip",
                         });
                       }}
                       style={{ width: "100%" }}
                       placeholder="Loại voucher"
                     >
+                      {/* Tùy chọn "Không chọn" luôn hiển thị đầu tiên nếu có voucher hợp lệ */}
+                      {product?.some((iac) => iac.status === "active") && (
+                        <Option value="none">Không chọn</Option>
+                      )}
+
+                      {/* Hiển thị danh sách voucher */}
                       {product
-                        ?.filter((iac) => iac.status == "active")
-                        ?.map((itc, index) => {
-                          const endDate = new Date(itc.endDate);
-                          console.log(endDate, "endDate");
-                          console.log(currentDate, "currentDate");
+                        ?.filter((iac) => iac.status === "active")
+                        ?.map((itc) => {
+                          const isDisabled =
+                            Number(orderTotalPrice) < Number(itc.require);
                           return (
                             <Option
-                              disabled={
-                                // currentDate
-                                // itc.type == "freeShip" && Number(cartLength) < 2
-                                Number(orderTotalPrice) < Number(itc.require)
-                              }
+                              disabled={isDisabled}
                               key={itc._id}
                               value={itc.value}
                             >
@@ -1076,6 +1081,7 @@ const Pay = () => {
                         })}
                     </Select>
                   </Form.Item>
+
                   <Form.Item
                     name="address"
                     label="Nhập chi tiết số nhà, ngách ngõ"
@@ -1119,10 +1125,11 @@ const Pay = () => {
                     <div className="flex space-x-4">
                       {/* COD */}
                       <label
-                        className={`text-gray-900 bg-[#37df37] hover:bg-[#37df37]/90 focus:ring-4 focus:outline-none focus:ring-[#37df37]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#37df37]/50 me-2 mb-2 ${selected === "cod"
+                        className={`text-gray-900 bg-[#37df37] hover:bg-[#37df37]/90 focus:ring-4 focus:outline-none focus:ring-[#37df37]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#37df37]/50 me-2 mb-2 ${
+                          selected === "cod"
                             ? "font-bold border-2 border-[#37df37] bg-[#37df37]/10 text-[#37df37]"
                             : "border border-gray-300"
-                          }`}
+                        }`}
                         onClick={() => setSelected("cod")} // Thêm onClick để thay đổi trạng thái
                       >
                         <img
@@ -1144,10 +1151,11 @@ const Pay = () => {
 
                       {/* PAYPAL */}
                       <label
-                        className={`text-gray-900 bg-[#F7BE38] hover:bg-[#F7BE38]/90 focus:ring-4 focus:outline-none focus:ring-[#F7BE38]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#F7BE38]/50 me-2 mb-2 ${selected === "paypal"
+                        className={`text-gray-900 bg-[#F7BE38] hover:bg-[#F7BE38]/90 focus:ring-4 focus:outline-none focus:ring-[#F7BE38]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#F7BE38]/50 me-2 mb-2 ${
+                          selected === "paypal"
                             ? "font-bold border-2 border-[#F7BE38] bg-[#F7BE38]/10 text-[#F7BE38]"
                             : "border border-gray-300"
-                          }`}
+                        }`}
                         onClick={() => setSelected("paypal")} // Thêm onClick để thay đổi trạng thái
                       >
                         <svg
