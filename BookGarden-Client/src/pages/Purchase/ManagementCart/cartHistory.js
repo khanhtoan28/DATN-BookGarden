@@ -78,28 +78,79 @@ const CartHistory = () => {
   const handleUpdateOrder = async (id) => {
     setLoading(true);
     try {
-      const categoryList = {
-        description: "Khách hàng hủy đơn hàng!",
-        status: "rejected",
-      };
-      await axiosClient.put("/order/" + id, categoryList).then((response) => {
-        if (response === undefined) {
-          notification["error"]({
-            message: `Thông báo`,
-            description: "Cập nhật thất bại",
-          });
-        } else {
+      // Lấy thông tin đơn hàng để kiểm tra phương thức thanh toán
+      const orderResponse = await axiosClient.get(`/order/${id}`);
+      const order = orderResponse.data;
+
+      let categoryList;
+      // Kiểm tra an toàn và không phân biệt hoa thường
+      if (order?.billing?.toLowerCase() === "paypal") {
+        categoryList = {
+          description: "Khách hàng hủy đơn hàng!",
+          status: "canceled-not-refunded",
+          billing: order.billing, // Giữ nguyên phương thức thanh toán
+        };
+      } else {
+        categoryList = {
+          description: "Khách hàng hủy đơn hàng!",
+          status: "rejected",
+        };
+      }
+
+      try {
+        const response = await axiosClient.put(`/order/${id}`, categoryList);
+
+        if (response) {
           notification["success"]({
-            message: `Thông báo`,
+            message: "Thông báo",
             description: "Cập nhật thành công",
           });
+        } else {
+          notification["error"]({
+            message: "Thông báo",
+            description: "Cập nhật thất bại",
+          });
         }
+
+        handleList();
+      } catch (updateError) {
+        // Log chi tiết lỗi cập nhật
+        console.error("Update Error Details:", {
+          message: updateError.message,
+          response: updateError.response?.data,
+          status: updateError.response?.status,
+          headers: updateError.response?.headers,
+        });
+
+        // Hiển thị thông báo lỗi chi tiết hơn
+        notification["error"]({
+          message: "Lỗi cập nhật đơn hàng",
+          description:
+            updateError.response?.data?.message ||
+            updateError.message ||
+            "Không thể cập nhật đơn hàng. Vui lòng thử lại.",
+        });
+      }
+
+      setLoading(false);
+    } catch (fetchError) {
+      // Log chi tiết lỗi lấy thông tin đơn hàng
+      console.error("Fetch Order Error Details:", {
+        message: fetchError.message,
+        response: fetchError.response?.data,
+        status: fetchError.response?.status,
+        headers: fetchError.response?.headers,
       });
 
-      handleList();
+      notification["error"]({
+        message: "Lỗi lấy thông tin đơn hàng",
+        description:
+          fetchError.response?.data?.message ||
+          fetchError.message ||
+          "Không thể lấy thông tin đơn hàng. Vui lòng thử lại.",
+      });
+
       setLoading(false);
-    } catch (error) {
-      throw error;
     }
   };
   const handleAutoCompleteOrder = async (orderId) => {
@@ -129,7 +180,7 @@ const CartHistory = () => {
         if (order.status === "shipped successfully") {
           setTimeout(() => {
             handleAutoCompleteOrder(order._id);
-          }, 60000); // 60 giây
+          }, 72 * 60 * 60 * 1000); // 3 ngày (72 giờ)
         }
       });
     }
@@ -205,35 +256,50 @@ const CartHistory = () => {
       title: <div className="text-center">Trạng thái</div>,
       dataIndex: "status",
       key: "status",
-      render: (slugs) => (
-        <span className="flex justify-center items-center w-full text-center">
-          {slugs === "rejected" ? (
-            <div className="status bg-red-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
-              <FaTimes className="inline-block" /> <span>Đã hủy</span>
-            </div>
-          ) : slugs === "shipping" ? (
-            <div className="status bg-blue-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
-              <FaTruck className="inline-block" /> <span>Đang vận chuyển</span>
-            </div>
-          ) : slugs === "shipped successfully" ? (
-            <div className="status bg-indigo-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
-              <FaCheck className="inline-block" /> <span>Đã giao</span>
-            </div>
-          ) : slugs === "final" ? (
-            <div className="status bg-green-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
-              <FaCheckCircle className="inline-block" /> <span>Hoàn thành</span>
-            </div>
-          ) : slugs === "confirmed" ? (
-            <div className="status bg-blue-600 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
-              <FaThumbsUp className="inline-block" /> <span>Đã xác nhận</span>
-            </div>
-          ) : (
-            <div className="status bg-gray-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
-              <FaClock className="inline-block" /> <span>Đợi xác nhận</span>
-            </div>
-          )}
-        </span>
-      ),
+      render: (slugs, record) => {
+        console.log("Status and Billing:", slugs, record.billing);
+        return (
+          <span className="flex justify-center items-center w-full text-center">
+            {slugs === "rejected" ? (
+              <div className="status bg-red-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+                <FaTimes className="inline-block" /> <span>Đã hủy</span>
+              </div>
+            ) : slugs === "canceled-not-refunded" ? (
+              <div className="status bg-orange-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+                <FaClock className="inline-block" />
+                <span>Đã hủy - Đợi hoàn tiền(paypal)</span>
+              </div>
+            ) : slugs === "refunded" ? (
+              <div className="status bg-green-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+                <FaCheckCircle className="inline-block" />
+                <span>Đã hoàn tiền</span>
+              </div>
+            ) : slugs === "shipping" ? (
+              <div className="status bg-blue-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+                <FaTruck className="inline-block" />{" "}
+                <span>Đang vận chuyển</span>
+              </div>
+            ) : slugs === "shipped successfully" ? (
+              <div className="status bg-indigo-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+                <FaCheck className="inline-block" /> <span>Đã giao</span>
+              </div>
+            ) : slugs === "final" ? (
+              <div className="status bg-green-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+                <FaCheckCircle className="inline-block" />{" "}
+                <span>Hoàn thành</span>
+              </div>
+            ) : slugs === "confirmed" ? (
+              <div className="status bg-blue-600 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+                <FaThumbsUp className="inline-block" /> <span>Đã xác nhận</span>
+              </div>
+            ) : (
+              <div className="status bg-gray-500 text-white py-1 px-4 rounded-full font-semibold flex items-center gap-2 whitespace-nowrap">
+                <FaClock className="inline-block" /> <span>Đợi xác nhận</span>
+              </div>
+            )}
+          </span>
+        );
+      },
     },
 
     {
@@ -251,58 +317,69 @@ const CartHistory = () => {
       title: <div className="text-center">Action</div>,
       dataIndex: "order",
       key: "order",
-      render: (text, record) => (
-        <div className="text-center">
-          {record.status === "shipped successfully" && (
-            <button
-              className="px-4 py-2 text-white font-semibold rounded bg-green-500 hover:bg-green-600 mt-3"
-              onClick={() => handleConfirmOrder(record)}
-            >
-              Xác nhận đơn hàng
-            </button>
-          )}
-          {/* Nút Xác nhận đơn hàng chỉ khi trạng thái là "shipped successfully" */}
-          {record.status === "shipped successfully" && (
-            <button
-              className="px-4 py-2 text-white font-semibold rounded bg-yellow-500 hover:bg-yellow-600 mt-3"
-              onClick={() => {
-                // Hiển thị Modal xác nhận
-                Modal.confirm({
-                  title: "Xác nhận khiếu nại/Hoàn hàng",
-                  content:
-                    "Bạn có chắc chắn muốn khiếu nại/hoàn hàng đơn hàng này?",
-                  okText: "Xác nhận",
-                  cancelText: "Hủy",
-                  onOk() {
-                    // Sau khi xác nhận, chuyển hướng tới trang khiếu nại
-                    history.push(`/complaint/${record._id}`);
-                    // Hiển thị thông báo thành công
-                  },
-                  onCancel() {
-                    // Nếu người dùng hủy bỏ, không làm gì
-                  },
-                });
-              }}
-            >
-              Khiếu nại/Hoàn hàng
-            </button>
-          )}
+      render: (text, record) => {
+        console.log("Record Details:", record);
+        return (
+          <div className="text-center">
+            {record.status === "shipped successfully" && (
+              <button
+                className="px-4 py-2 text-white font-semibold rounded bg-green-500 hover:bg-green-600 mt-3"
+                onClick={() => handleConfirmOrder(record)}
+              >
+                Xác nhận đơn hàng
+              </button>
+            )}
+            {/* Nút Xác nhận đơn hàng chỉ khi trạng thái là "shipped successfully" */}
+            {record.status === "shipped successfully" && (
+              <button
+                className="px-4 py-2 text-white font-semibold rounded bg-yellow-500 hover:bg-yellow-600 mt-3"
+                onClick={() => {
+                  // Hiển thị Modal xác nhận
+                  Modal.confirm({
+                    title: "Xác nhận khiếu nại/Hoàn hàng",
+                    content:
+                      "Bạn có chắc chắn muốn khiếu nại/hoàn hàng đơn hàng này?",
+                    okText: "Xác nhận",
+                    cancelText: "Hủy",
+                    onOk() {
+                      // Sau khi xác nhận, chuyển hướng tới trang khiếu nại
+                      history.push(`/complaint/${record._id}`);
+                      // Hiển thị thông báo thành công
+                    },
+                    onCancel() {
+                      // Nếu người dùng hủy bỏ, không làm gì
+                    },
+                  });
+                }}
+              >
+                Khiếu nại/Hoàn hàng
+              </button>
+            )}
 
-          <button
-            className={`px-4 py-2 text-white font-semibold rounded mt-3 whitespace-nowrap ${
-              record.status === "pending" || record.status === "confirmed"
-                ? "bg-red-500 hover:bg-red-600"
-                : "bg-gray-300 cursor-not-allowed"
-            }`}
-            onClick={() => handleCancelOrder(record)}
-            disabled={
-              !(record.status === "pending" || record.status === "confirmed")
-            } // Chỉ hoạt động khi trạng thái là "pending" hoặc "confirmed"
-          >
-            Hủy đơn hàng
-          </button>
-        </div>
-      ),
+            <button
+              className={`px-4 py-2 text-white font-semibold rounded mt-3 whitespace-nowrap ${
+                record.status === "pending" ||
+                record.status === "confirmed" ||
+                (record.billing?.toLowerCase() === "paypal" &&
+                  record.status === "pending")
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+              onClick={() => handleCancelOrder(record)}
+              disabled={
+                !(
+                  record.status === "pending" ||
+                  record.status === "confirmed" ||
+                  (record.billing?.toLowerCase() === "paypal" &&
+                    record.status === "pending")
+                )
+              }
+            >
+              Hủy đơn hàng
+            </button>
+          </div>
+        );
+      },
     },
   ];
   const handleCancelComplaint = async (complaint) => {
@@ -508,7 +585,7 @@ const CartHistory = () => {
   }, []);
   return (
     <div>
-      <Spin spinning={false}>
+      <Spin spinning={loading}>
         <Card className="container_details">
           <div className="product_detail">
             <div style={{ marginLeft: 5, marginBottom: 10, marginTop: 10 }}>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Confetti from "react-confetti";
 import { AuditOutlined, HomeOutlined } from "@ant-design/icons";
 import { Breadcrumb, Card, Result, Spin, Steps } from "antd";
-import { useHistory, useParams } from "react-router-dom";
+import { useHistory, useLocation, useParams } from "react-router-dom";
 import productApi from "../../../apis/productApi";
 import userApi from "../../../apis/userApi";
 import "./finalPay.css";
@@ -13,53 +13,63 @@ const FinalPay = () => {
   const [userData, setUserData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [orderTotal, setOrderTotal] = useState([]);
-  const [showConfetti, setShowConfetti] = useState(true); // Hiển thị pháo hoa
-  let { id } = useParams();
+  const [showConfetti, setShowConfetti] = useState(true);
+  const { id } = useParams();
   const history = useHistory();
+  const location = useLocation();
 
   const handleFinal = () => {
     history.push("/");
   };
 
   useEffect(() => {
-    // Kiểm tra nếu trang chưa tải lại
-    if (!sessionStorage.getItem("reloaded")) {
-      sessionStorage.setItem("reloaded", "true");
+    const queryParams = new URLSearchParams(location.search);
+    const shouldReload = queryParams.get("reload");
+
+    if (shouldReload) {
+      // Xóa query parameter để tránh reload lần sau
+      queryParams.delete("reload");
+      const newUrl = `${location.pathname}?${queryParams.toString()}`;
+      window.history.replaceState({}, document.title, newUrl);
+
+      // Thực hiện reload
       window.location.reload();
-    }
+    } else {
+      // Logic tải dữ liệu bình thường
+      (async () => {
+        try {
+          const item = await productApi.getDetailProduct(id);
+          setProductDetail(item);
 
-    (async () => {
-      try {
-        const item = await productApi.getDetailProduct(id);
-        setProductDetail(item);
+          const response = await userApi.getProfile();
+          const cart = JSON.parse(localStorage.getItem("cart")) || [];
+          const transformedData = cart.map(
+            ({ _id: product, stock, salePrice }) => ({
+              product,
+              stock,
+              salePrice,
+            })
+          );
 
-        const response = await userApi.getProfile();
-        const cart = JSON.parse(localStorage.getItem("cart")) || [];
-        const transformedData = cart.map(
-          ({ _id: product, stock, salePrice }) => ({
-            product,
-            stock,
-            salePrice,
-          })
-        );
+          let totalPrice = 0;
+          for (let i = 0; i < transformedData.length; i++) {
+            totalPrice +=
+              transformedData[i].salePrice * transformedData[i].stock;
+          }
 
-        let totalPrice = 0;
-        for (let i = 0; i < transformedData.length; i++) {
-          totalPrice += transformedData[i].salePrice * transformedData[i].stock;
+          setOrderTotal(totalPrice);
+          setProductDetail(transformedData);
+          setUserData(response.user);
+          setLoading(false);
+
+          setTimeout(() => setShowConfetti(false), 5000);
+        } catch (error) {
+          console.log("Failed to fetch event detail:", error);
         }
-
-        setOrderTotal(totalPrice);
-        setProductDetail(transformedData);
-        setUserData(response.user);
-        setLoading(false);
-
-        setTimeout(() => setShowConfetti(false), 5000); // Tắt pháo hoa sau 5 giây
-      } catch (error) {
-        console.log("Failed to fetch event detail:", error);
-      }
-    })();
-    window.scrollTo(0, 0);
-  }, []);
+      })();
+      window.scrollTo(0, 0);
+    }
+  }, [location, id]);
 
   return (
     <div className="py-5">

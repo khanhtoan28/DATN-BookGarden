@@ -127,7 +127,7 @@ const OrderList = () => {
           })}
         </a>
       ),
-    },    
+    },
     {
       title: "Hình thức thanh toán",
       dataIndex: "billing",
@@ -163,7 +163,15 @@ const OrderList = () => {
           <Option value="final" disabled>
             Hoàn thành
           </Option>
-
+          <Option value="canceled-not-refunded" disabled>
+            Đã hủy - Đợi hoàn tiền
+          </Option>
+          <Option
+            value="refunded"
+            disabled={status !== "canceled-not-refunded"}
+          >
+            Đã hoàn tiền
+          </Option>
           <Option value="rejected" disabled>
             Đã hủy
           </Option>

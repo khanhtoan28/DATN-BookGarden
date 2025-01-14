@@ -43,6 +43,8 @@ const orderSchema = new mongoose.Schema(
         "acceptcomplaint",
         "refundcomplaint",
         "cancelcomplaint",
+        "canceled-not-refunded",
+        "refunded",
       ],
       default: "pending",
     },

@@ -363,7 +363,7 @@ const Pay = () => {
             localStorage.setItem("cart", JSON.stringify(updatedCart)); // Cập nhật giỏ hàng
 
             form.resetFields();
-            history.push("/final-pay");
+            history.push("/final-pay?reload=true");
             localStorage.removeItem("cartLength");
           }
         });
@@ -567,7 +567,7 @@ const Pay = () => {
           localStorage.removeItem("cartLength");
 
           form.resetFields();
-          history.push("/final-pay");
+          history.push("/final-pay?reload=true");
         } else {
           notification["error"]({
             message: `Thông báo`,
