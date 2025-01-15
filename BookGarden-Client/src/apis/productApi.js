@@ -48,8 +48,18 @@ const productApi = {
       data.page = 1;
     }
     const url = "/category/products/" + id;
-    return axiosClient.post(url, data);
+    return axiosClient
+      .post(url, data)
+      .then((response) => {
+        console.log("API Response:", response);
+        return response;
+      })
+      .catch((error) => {
+        console.error("API Error:", error);
+        throw error;
+      });
   },
+
   getDetailVoucher(id) {
     const url = "/voucher/" + id;
     return axiosClient.get(url);
