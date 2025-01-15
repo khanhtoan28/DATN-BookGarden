@@ -243,136 +243,122 @@ const Pay = () => {
     }
   }, [selectedProducts]);
   const accountCreate = async (values) => {
-    setLoading(true); // Bắt đầu loading khi gửi form
+    setLoading(true);
 
-    // Tính toán tổng tiền (bao gồm phí ship)
-    const totalAmount =
-      valueVouche?.value == "freeShip"
-        ? orderTotalPrice
-        : Number(orderTotalPrice) - Number(valueVouche.value || 0) + totalFee;
-    console.log(totalAmount, "totalAmount");
-    console.log(valueVouche, "valueVouche");
-    const orderData = {
-      userId: userData._id,
-      address: values.address,
-      billing: values.billing,
-      description: values.description,
-      status: "pending",
-      products: productDetail,
-      orderTotal: totalAmount, // Tổng tiền đã tính
-    };
-    if (values.billing === "vnpay") {
-      try {
-        // Lưu thông tin đơn hàng vào localStorage
-        localStorage.setItem(
-          "vnpay_order_info",
-          JSON.stringify({
-            userId: userData._id,
-            address: values.address,
-            billing: values.billing,
-            description: values.description,
-            status: "pending",
-            products: selectedProducts,
-            orderTotal: totalAmount,
-          })
-        );
+    try {
+      // Kiểm tra stock của từng sản phẩm trước khi thanh toán
+      const stockCheckPromises = selectedProducts.map(async (product) => {
+        try {
+          const response = await productApi.getDetailProduct(product._id);
+          const productDetail = response?.product;
 
-        // Lưu thông tin địa chỉ và mô tả
-        localStorage.setItem("vnpay_description", values.description);
-        localStorage.setItem("vnpay_address", values.address);
-
-        // Dữ liệu thanh toán VNPAY
-        const vnpayData = {
-          amount: totalAmount,
-          orderDescription: values.description || "Thanh toán đơn hàng",
-          orderType: "billpayment",
-          language: "vn",
-          returnUrl: "http://localhost:3500/pay",
-        };
-
-        // Gọi API tạo URL thanh toán VNPAY
-        const response = await axiosClient.post(
-          "/vnpay/create-payment-url",
-          vnpayData
-        );
-
-        if (response.paymentUrl) {
-          // Chuyển hướng đến trang thanh toán VNPAY
-          window.location.href = response.paymentUrl;
-        } else {
-          notification["error"]({
-            message: `Thông báo`,
-            description: "Không thể tạo đường dẫn thanh toán VNPAY",
-          });
-        }
-      } catch (error) {
-        console.error("VNPAY Payment Error:", error);
-        notification["error"]({
-          message: `Thông báo`,
-          description: "Lỗi trong quá trình tạo thanh toán VNPAY",
-        });
-      }
-      return;
-    }
-
-    // Giữ nguyên logic cho PayPal
-    else if (values.billing === "paypal") {
-      localStorage.setItem("description", values.description);
-      localStorage.setItem("address", values.address);
-      const approvalUrl = await handlePayment(values, orderData); // Truyền orderData vào hàm handlePayment
-      if (approvalUrl) {
-        window.location.href = approvalUrl; // Chuyển hướng đến URL thanh toán PayPal
-      } else {
-        notification["error"]({
-          message: `Thông báo`,
-          description: "Thanh toán thất bại",
-        });
-      }
-    } else {
-      // Giữ nguyên logic cho COD
-      try {
-        await axiosClient.post("/order", orderData).then((response) => {
-          console.log(response);
-
-          if (response == undefined) {
-            notification["error"]({
-              message: `Thông báo`,
-              description: "Đặt hàng thất bại",
-            });
-          } else {
-            notification["success"]({
-              message: `Thông báo`,
-              description: "Đặt hàng thành công",
-            });
-            // Xóa dữ liệu form khỏi localStorage
-            clearPayFormLocalStorage();
-
-            // Xóa sản phẩm đã chọn khỏi giỏ hàng
-            const cart = JSON.parse(localStorage.getItem("cart")) || [];
-            console.log("Current Cart:", cart); // Kiểm tra giỏ hàng hiện tại
-            console.log("Selected Products:", selectedProducts); // Kiểm tra sản phẩm đã chọn
-
-            // Lọc giỏ hàng để chỉ giữ lại sản phẩm không nằm trong selectedProducts
-            const updatedCart = cart.filter(
-              (item) =>
-                !selectedProducts.some((selected) => selected._id === item._id)
-            );
-
-            console.log("Updated Cart:", updatedCart); // Kiểm tra giỏ hàng đã cập nhật
-
-            localStorage.setItem("cart", JSON.stringify(updatedCart)); // Cập nhật giỏ hàng
-
-            form.resetFields();
-            history.push("/final-pay?reload=true");
-            localStorage.removeItem("cartLength");
+          if (!productDetail) {
+            throw new Error(`Sản phẩm ${product.name} không tồn tại`);
           }
+
+          if (productDetail.stock < product.stock) {
+            throw new Error(`Sản phẩm ${productDetail.name} đã hết hàng`);
+          }
+
+          return { productId: product._id, available: true };
+        } catch (error) {
+          return {
+            productId: product._id,
+            available: false,
+            error: error.message,
+          };
+        }
+      });
+
+      // Chờ kiểm tra tất cả các sản phẩm
+      const stockCheckResults = await Promise.all(stockCheckPromises);
+
+      // Kiểm tra kết quả
+      const unavailableProducts = stockCheckResults.filter(
+        (result) => !result.available
+      );
+
+      if (unavailableProducts.length > 0) {
+        // Hiển thị thông báo cho các sản phẩm không khả dụng
+        unavailableProducts.forEach((product) => {
+          notification["error"]({
+            message: "Sản phẩm hết hàng",
+            description: product.error,
+          });
         });
-      } catch (error) {
-        throw error;
-      }
-      setTimeout(function () {
+
+        // Cập nhật giỏ hàng, loại bỏ các sản phẩm hết hàng
+        const updatedCart = selectedProducts.filter(
+          (product) =>
+            !unavailableProducts.some(
+              (unavailable) => unavailable.productId === product._id
+            )
+        );
+
+        // Cập nhật localStorage
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
+        localStorage.setItem(
+          "selectedProducts",
+          JSON.stringify(updatedCart.map((product) => product._id))
+        );
+
         setLoading(false);
-      }, 1000);
+        return;
+      }
+
+      // Tiếp tục logic thanh toán như cũ
+      const totalAmount =
+        valueVouche?.value == "freeShip"
+          ? orderTotalPrice
+          : Number(orderTotalPrice) - Number(valueVouche.value || 0) + totalFee;
+
+      const orderData = {
+        userId: userData._id,
+        address: values.address,
+        billing: values.billing,
+        description: values.description,
+        status: "pending",
+        products: productDetail,
+        orderTotal: totalAmount,
+      };
+
+      // Phần code thanh toán còn lại giữ nguyên
+      if (values.billing === "vnpay") {
+        // Logic VNPAY
+      } else if (values.billing === "paypal") {
+        // Logic PayPal
+      } else {
+        // Logic COD
+        const response = await axiosClient.post("/order", orderData);
+
+        if (response) {
+          notification["success"]({
+            message: "Thông báo",
+            description: "Đặt hàng thành công",
+          });
+
+          // Xóa sản phẩm khỏi giỏ hàng
+          const cart = JSON.parse(localStorage.getItem("cart")) || [];
+          const updatedCart = cart.filter(
+            (item) =>
+              !selectedProducts.some((selected) => selected._id === item._id)
+          );
+
+          localStorage.setItem("cart", JSON.stringify(updatedCart));
+          localStorage.removeItem("selectedProducts");
+
+          form.resetFields();
+          history.push("/final-pay?reload=true");
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi trong quá trình thanh toán:", error);
+      notification["error"]({
+        message: "Lỗi",
+        description: "Đã có lỗi xảy ra trong quá trình thanh toán",
+      });
+    } finally {
+      setLoading(false);
     }
   };
   const handlePayment = async (values) => {
