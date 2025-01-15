@@ -28,22 +28,67 @@ const Cart = () => {
   const [cartTotal, setCartTotal] = useState(0);
   const history = useHistory();
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const handlePay = () => {
+  const handlePay = async () => {
     if (selectedProducts.length === 0) {
       message.error("Vui lòng chọn ít nhất một sản phẩm để thanh toán.");
       return;
     }
 
-    // Lọc các sản phẩm đã chọn từ giỏ hàng
-    const selectedCartItems = productDetail.filter((item) =>
-      selectedProducts.includes(item._id)
-    );
+    try {
+      // Kiểm tra stock của từng sản phẩm
+      const stockCheckPromises = selectedProducts.map(async (productId) => {
+        try {
+          const response = await productApi.getDetailProduct(productId);
+          const product = response?.product;
 
-    // Chuyển hướng đến trang thanh toán với danh sách sản phẩm đã chọn
-    history.push({
-      pathname: "/pay",
-      state: { selectedProducts: selectedCartItems }, // Gửi danh sách sản phẩm đã chọn
-    });
+          // Tìm sản phẩm trong giỏ hàng để lấy số lượng muốn mua
+          const cartItem = productDetail.find((item) => item._id === productId);
+          const requestedQuantity = cartItem?.stock || 1;
+
+          if (!product) {
+            throw new Error(`Sản phẩm ${productId} không tồn tại`);
+          }
+
+          if (product.stock < requestedQuantity) {
+            throw new Error(`Sản phẩm ${product.name} đã hết hàng`);
+          }
+
+          return { productId, available: true };
+        } catch (error) {
+          return { productId, available: false, error: error.message };
+        }
+      });
+
+      // Chờ kiểm tra tất cả các sản phẩm
+      const stockCheckResults = await Promise.all(stockCheckPromises);
+
+      // Kiểm tra kết quả
+      const unavailableProducts = stockCheckResults.filter(
+        (result) => !result.available
+      );
+
+      if (unavailableProducts.length > 0) {
+        // Hiển thị thông báo cho các sản phẩm không khả dụng
+        unavailableProducts.forEach((product) => {
+          message.error(product.error);
+        });
+        return;
+      }
+
+      // Lọc các sản phẩm đã chọn từ giỏ hàng
+      const selectedCartItems = productDetail.filter((item) =>
+        selectedProducts.includes(item._id)
+      );
+
+      // Chuyển hướng đến trang thanh toán với danh sách sản phẩm đã chọn
+      history.push({
+        pathname: "/pay",
+        state: { selectedProducts: selectedCartItems },
+      });
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra stock:", error);
+      message.error("Đã có lỗi xảy ra khi kiểm tra sản phẩm.");
+    }
   };
 
   const deleteCart = () => {
