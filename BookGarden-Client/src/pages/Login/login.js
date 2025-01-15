@@ -16,7 +16,8 @@ const Login = () => {
       .login(values.email, values.password)
       .then((response) => {
         if (
-          response.user.role === "isClient" &&
+          (response.user.role === "isClient" &&
+            response.user.role === "isAdmin") ||
           response.user.status !== "noactive"
         ) {
           notification.success({

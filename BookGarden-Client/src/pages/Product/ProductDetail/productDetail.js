@@ -33,7 +33,62 @@ const ProductDetail = () => {
   const [comment, setComment] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
+  const paymentCard = (product) => {
+    // Kiểm tra đăng nhập
+    const user = localStorage.getItem("user");
+    if (!user) {
+      message.warning("Vui lòng đăng nhập");
+      history.push("/login");
+      return;
+    }
+
+    if (product.stock === 0) {
+      message.warning("Sản phẩm đã hết hàng");
+      return;
+    }
+
+    const existingItems = JSON.parse(localStorage.getItem("cart")) || [];
+    let updatedItems;
+    const existingItemIndex = existingItems.findIndex(
+      (item) => item._id === product._id
+    );
+
+    if (existingItemIndex !== -1) {
+      // Nếu sản phẩm đã có trong giỏ hàng
+      if (existingItems[existingItemIndex].stock >= product.stock) {
+        message.warning("Không thể thêm quá số lượng tồn kho");
+        return;
+      }
+      updatedItems = existingItems.map((item, index) => {
+        if (index === existingItemIndex) {
+          return { ...item, stock: item.stock + 1 };
+        }
+        return item;
+      });
+    } else {
+      // Nếu sản phẩm chưa có trong giỏ hàng
+      updatedItems = [...existingItems, { ...product, stock: 1 }];
+    }
+
+    // Lưu vào localStorage
+    localStorage.setItem("cart", JSON.stringify(updatedItems));
+    localStorage.setItem("cartLength", updatedItems.length);
+
+    // Điều hướng đến trang giỏ hàng
+    setTimeout(() => {
+      history.push("/cart");
+    }, 300); // Trì hoãn 300ms để hiển thị thông báo trước khi chuyển trang
+  };
+
   const addCart = (product) => {
+    // Kiểm tra đăng nhập
+    const user = localStorage.getItem("user");
+    if (!user) {
+      message.warning("Vui lòng đăng nhập ");
+      history.push("/login");
+      return;
+    }
+
     if (product.stock === 0) {
       message.warning("Sản phẩm đã hết hàng");
       return;
@@ -76,47 +131,6 @@ const ProductDetail = () => {
     setTimeout(() => {
       window.location.reload();
     }, 500); // Trì hoãn reload trong 1 giây
-  };
-
-  const paymentCard = (product) => {
-    if (product.stock === 0) {
-      message.warning("Sản phẩm đã hết hàng");
-      return;
-    }
-
-    const existingItems = JSON.parse(localStorage.getItem("cart")) || [];
-    let updatedItems;
-    const existingItemIndex = existingItems.findIndex(
-      (item) => item._id === product._id
-    );
-
-    if (existingItemIndex !== -1) {
-      // Nếu sản phẩm đã có trong giỏ hàng
-      if (existingItems[existingItemIndex].stock >= product.stock) {
-        message.warning("Không thể thêm quá số lượng tồn kho");
-        return;
-      }
-      updatedItems = existingItems.map((item, index) => {
-        if (index === existingItemIndex) {
-          return { ...item, stock: item.stock + 1 };
-        }
-        return item;
-      });
-    } else {
-      // Nếu sản phẩm chưa có trong giỏ hàng
-      updatedItems = [...existingItems, { ...product, stock: 1 }];
-    }
-
-    // Lưu vào localStorage
-    localStorage.setItem("cart", JSON.stringify(updatedItems));
-    localStorage.setItem("cartLength", updatedItems.length);
-
-    // Hiển thị thông báo
-
-    // Điều hướng đến trang giỏ hàng
-    setTimeout(() => {
-      history.push("/cart");
-    }, 300); // Trì hoãn 300ms để hiển thị thông báo trước khi chuyển trang
   };
 
   const handleReadMore = (id) => {
