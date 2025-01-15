@@ -199,17 +199,152 @@ const ProductDetail = () => {
 
         if (productResponse && productResponse.product) {
           setProductDetail(productResponse.product);
+
+          // Lấy sản phẩm theo danh mục của sản phẩm chi tiết
+          const categoryId = productResponse.product.category?._id;
+
+          console.log("Category ID:", categoryId);
+
+          if (categoryId) {
+            // Sử dụng phương thức getProductsByCategory
+            const recommendResponse = await productApi.getProductsByCategory(
+              {
+                page: 1,
+                limit: 4,
+              },
+              categoryId
+            );
+
+            console.log("Recommendations Full Response:", recommendResponse);
+
+            // Debug chi tiết từng bước lọc
+            let filteredRecommendations = [];
+
+            // Log chi tiết từng bước
+            console.log("Recommend Response Type:", typeof recommendResponse);
+            console.log(
+              "Recommend Response Keys:",
+              Object.keys(recommendResponse)
+            );
+
+            // Thử các phương án truy cập
+            if (Array.isArray(recommendResponse)) {
+              console.log("Case 1: Direct Array");
+              filteredRecommendations = recommendResponse.filter((item) => {
+                console.log("Comparing:", item._id, "with", id);
+                return item._id !== id;
+              });
+            } else if (
+              recommendResponse.data &&
+              Array.isArray(recommendResponse.data)
+            ) {
+              console.log("Case 2: Response with data array");
+              filteredRecommendations = recommendResponse.data.filter(
+                (item) => {
+                  console.log("Comparing:", item._id, "with", id);
+                  return item._id !== id;
+                }
+              );
+            } else if (
+              recommendResponse.products &&
+              Array.isArray(recommendResponse.products)
+            ) {
+              console.log("Case 3: Response with products array");
+              filteredRecommendations = recommendResponse.products.filter(
+                (item) => {
+                  console.log("Comparing:", item._id, "with", id);
+                  return item._id !== id;
+                }
+              );
+            } else {
+              console.warn("Không thể xác định cấu trúc dữ liệu");
+
+              // Thử truy cập động
+              for (let key in recommendResponse) {
+                if (Array.isArray(recommendResponse[key])) {
+                  console.log(`Trying key: ${key}`);
+                  filteredRecommendations = recommendResponse[key].filter(
+                    (item) => {
+                      console.log("Comparing:", item._id, "with", id);
+                      return item._id !== id;
+                    }
+                  );
+
+                  if (filteredRecommendations.length > 0) {
+                    break;
+                  }
+                }
+              }
+            }
+
+            console.log("Filtered Recommendations:", filteredRecommendations);
+
+            // Nếu không có sản phẩm recommend từ category, thử fallback
+            if (
+              !filteredRecommendations ||
+              filteredRecommendations.length === 0
+            ) {
+              try {
+                const fallbackRecommend = await productApi.getRecommendProduct(
+                  id
+                );
+                console.log("Fallback Recommend:", fallbackRecommend);
+
+                if (fallbackRecommend?.recommendations) {
+                  filteredRecommendations =
+                    fallbackRecommend.recommendations.filter(
+                      (item) => item._id !== id
+                    );
+                }
+              } catch (fallbackError) {
+                console.error("Fallback recommend error:", fallbackError);
+              }
+            }
+
+            // Đảm bảo set recommend
+            setRecommend(filteredRecommendations || []);
+
+            // Nếu không có sản phẩm recommend, log thêm thông tin
+            if (
+              !filteredRecommendations ||
+              filteredRecommendations.length === 0
+            ) {
+              console.warn("Không có sản phẩm recommend");
+              message.info("Không có sản phẩm recommend");
+            }
+          } else {
+            // Nếu không có category ID, thử recommend chung
+            try {
+              const fallbackRecommend = await productApi.getRecommendProduct(
+                id
+              );
+              console.log(
+                "Fallback Recommend (No Category):",
+                fallbackRecommend
+              );
+
+              if (fallbackRecommend?.recommendations) {
+                const filteredRecommendations =
+                  fallbackRecommend.recommendations.filter(
+                    (item) => item._id !== id
+                  );
+                setRecommend(filteredRecommendations);
+              }
+            } catch (fallbackError) {
+              console.error(
+                "Fallback recommend error (No Category):",
+                fallbackError
+              );
+            }
+          }
         } else {
           console.error("Product data is not available in the response.");
         }
 
-        const recommendResponse = await productApi.getRecommendProduct(id);
-        console.log("Recommendations Response:", recommendResponse);
-        setRecommend(recommendResponse?.recommendations);
-
         setLoading(false);
       } catch (error) {
         console.log("Failed to fetch event detail:", error);
+        setLoading(false);
       }
     })();
   };
@@ -546,24 +681,27 @@ const ProductDetail = () => {
                           {item.name}
                         </Paragraph>
                         <div className="price-amount">
-                          <Paragraph className="price-product">
-                            {numberWithCommas(item.price - item.salePrice)} đ
-                          </Paragraph>
-                          {item.salePrice !== 0 && (
-                            <Paragraph className="price-cross">
-                              {numberWithCommas(item.price)} đ
-                            </Paragraph>
-                          )}
+                          <React.Fragment>
+                            {item?.salePrice === item?.price ? (
+                              <Paragraph className="price-product">
+                                {numberWithCommas(item.salePrice)} đ
+                              </Paragraph>
+                            ) : (
+                              <React.Fragment>
+                                <Paragraph className="price-product">
+                                  {item?.salePrice &&
+                                    numberWithCommas(item.salePrice)}{" "}
+                                  đ
+                                </Paragraph>
+                                <Paragraph className="price-cross">
+                                  {item.price && numberWithCommas(item.price)} đ
+                                </Paragraph>
+                              </React.Fragment>
+                            )}
+                          </React.Fragment>
                         </div>
                       </div>
                     </div>
-                    <Paragraph
-                      className="badge"
-                      style={{ position: "absolute", top: 10, left: 9 }}
-                    >
-                      <span>Giảm giá</span>
-                      <img src={triangleTopRight} />
-                    </Paragraph>
                   </Col>
                 )
               )}
