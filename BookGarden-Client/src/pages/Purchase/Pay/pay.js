@@ -256,8 +256,14 @@ const Pay = () => {
             throw new Error(`Sản phẩm ${product.name} không tồn tại`);
           }
 
-          if (productDetail.stock < product.stock) {
+          if (productDetail.stock === 0) {
             throw new Error(`Sản phẩm ${productDetail.name} đã hết hàng`);
+          }
+
+          if (productDetail.stock < product.stock) {
+            throw new Error(
+              `Sản phẩm ${productDetail.name} chỉ còn ${productDetail.stock} sản phẩm`
+            );
           }
 
           return { productId: product._id, available: true };

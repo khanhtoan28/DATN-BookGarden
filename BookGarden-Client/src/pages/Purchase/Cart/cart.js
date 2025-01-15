@@ -48,9 +48,14 @@ const Cart = () => {
           if (!product) {
             throw new Error(`Sản phẩm ${productId} không tồn tại`);
           }
+          if (product.stock === 0) {
+            throw new Error(`Sản phẩm ${product.name} đã hết hàng`);
+          }
 
           if (product.stock < requestedQuantity) {
-            throw new Error(`Sản phẩm ${product.name} đã hết hàng`);
+            throw new Error(
+              `Sản phẩm ${product.name} chỉ còn ${product.stock} sản phẩm`
+            );
           }
 
           return { productId, available: true };
