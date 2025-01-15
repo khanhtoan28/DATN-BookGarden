@@ -54,6 +54,32 @@ app.use("/api/news", newsRoute);
 app.use("/api", voucherRoute);
 app.use("/api/vnpay", vnpayRoute);
 app.use("/uploads", express.static("uploads"));
+app.delete("/api/delete-time", async (req, res) => {
+  try {
+    const existingData = await setting.find({});
+    if (existingData.length === 0) {
+      return res.status(400).json({ message: "Không có dữ liệu để xóa." });
+    }
+
+    // Xóa thời gian giảm giá
+    await setting.deleteMany();
+
+    // Cập nhật giá sản phẩm về giá gốc
+    await product.updateMany({}, [
+      {
+        $set: {
+          salePrice: "$price", // Đặt lại giá gốc
+        },
+      },
+    ]);
+
+    return res.json({ message: "Đã xóa thời gian giảm giá và cập nhật giá sản phẩm." });
+  } catch (error) {
+    console.error("Lỗi khi xóa:", error);
+    res.status(500).json({ message: "Lỗi khi xóa dữ liệu." });
+  }
+});
+
 app.get("/api/set-time", async (req, res) => {
   try {
     const data = req.query.time;
