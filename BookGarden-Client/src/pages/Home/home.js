@@ -53,7 +53,7 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = { limit: 4, page: 1 };
+        const data = { limit: 4, page: 1, sort: { createdAt: -1 } };
 
         const responsePhone = await productApi.getProductsByCategory(
           data,

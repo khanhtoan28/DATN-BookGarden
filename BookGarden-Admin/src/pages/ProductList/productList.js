@@ -182,7 +182,7 @@ const ProductList = () => {
               size: values.size,
               form: values.form,
               status: values.status,
-
+              slide: images,
               author: values.author,
               pulisher: values.pulisher,
             };
@@ -305,11 +305,17 @@ const ProductList = () => {
 
   const handleProductEdit = (id) => {
     setOpenModalUpdate(true);
+    setImages([]); // Reset images khi mở modal edit
     (async () => {
       try {
         const response = await productApi.getDetailProduct(id);
         console.log(response);
         setId(id);
+        // Nếu có slide, set vào state images
+        if (response.product.slide && response.product.slide.length > 0) {
+          setImages(response.product.slide);
+        }
+
         form2.setFieldsValue({
           name: response.product.name,
           price: response.product.price,

@@ -381,7 +381,10 @@ const ProductDetail = () => {
             <Row gutter={12} style={{ marginTop: 20 }}>
               <Col span={8}>
                 <Card className="card_image" bordered={false}>
-                  <img src={productDetail.image} />
+                  <img
+                    className="w-[200px] h-[300px] object-cover object-center "
+                    src={productDetail.image}
+                  />
                   {productDetail?.slide?.length > 0 && (
                     <div
                       className="slide-images"
@@ -442,7 +445,7 @@ const ProductDetail = () => {
                   )}
                 </Card>
               </Col>
-              <Col className="card_detail">
+              <Col className="card_detail ml-[10px]">
                 <div className="price">
                   <h1 className="product_name">{productDetail.name}</h1>
                   <Rate disabled value={avgRating} className="rate" />
